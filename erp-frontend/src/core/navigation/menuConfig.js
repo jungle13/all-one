@@ -1,3 +1,4 @@
+// PATH: erp-frontend/src/core/navigation/menuConfig.js
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
 import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
 
@@ -9,8 +10,8 @@ export const ROLES = {
 
 /**
  * Menú centralizado con íconos y permisos.
- * - El PRIMER ítem es "Subscriptores", como pediste.
- * - Usa `allowedRoles` para controlar visibilidad.
+ * - El PRIMER ítem es "Subscriptores".
+ * - Usa `allowedRoles` para visibilidad por rol.
  */
 export const menuItems = [
   {
@@ -32,3 +33,9 @@ export const menuItems = [
 export function getMenuForRole(role) {
   return menuItems.filter((item) => !item.allowedRoles || item.allowedRoles.includes(role));
 }
+
+// Compatibilidad: si en algún archivo se importó { menuConfig }
+export const menuConfig = menuItems;
+
+// (Opcional) default export si alguien usa `import menu from ...`
+export default menuItems;

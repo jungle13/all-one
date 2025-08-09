@@ -120,179 +120,6 @@ erp-frontend/vite.config.js
 <files>
 This section contains the contents of the repository's files.
 
-<file path="erp-frontend/src/core/api/apiClient.js">
-import axios from 'axios';
-
-const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
-  headers: { 'Content-Type': 'application/json' }
-});
-
-apiClient.interceptors.request.use((config) => {
-  const raw = localStorage.getItem('user');
-  if (raw) {
-    const { token } = JSON.parse(raw) || {};
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-export default apiClient;
-</file>
-
-<file path="erp-frontend/src/core/components/SubscriberTable.jsx">
-// PATH: erp-frontend/src/modules/admin/components/SubscriberTable.jsx
-import * as React from 'react';
-import { Box, Button, Stack } from '@mui/material';
-import { DataGrid, GridActionsCellItem, GridToolbarQuickFilter } from '@mui/x-data-grid';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-
-/**
- * Tabla de Suscriptores (única y robusta):
- * - Acepta `rows` (preferido) o `data` (compatibilidad).
- * - Si recibe indefinidos, usa [] y NO rompe.
- */
-export default function SubscriberTable({ rows, data, onAdd, onEdit, onDelete }) {
-  const safeRows = React.useMemo(() => {
-    if (Array.isArray(rows)) return rows;
-    if (Array.isArray(data)) return data;
-    return [];
-  }, [rows, data]);
-
-  const columns = React.useMemo(() => [
-    { field: 'name', headerName: 'Nombre', flex: 1, minWidth: 180 },
-    { field: 'email', headerName: 'Correo', flex: 1, minWidth: 220 },
-    { field: 'plan', headerName: 'Plan', width: 140, valueGetter: (v, r) => r?.plan ?? '—' },
-    { field: 'status', headerName: 'Estado', width: 140, valueGetter: (v, r) => r?.status ?? '—' },
-    {
-      field: 'actions',
-      type: 'actions',
-      headerName: 'Acciones',
-      width: 120,
-      getActions: (params) => [
-        <GridActionsCellItem
-          key="edit"
-          icon={<EditRoundedIcon />}
-          label="Editar"
-          onClick={() => onEdit?.(params.row)}
-        />,
-        <GridActionsCellItem
-          key="delete"
-          icon={<DeleteOutlineRoundedIcon />}
-          label="Eliminar"
-          onClick={() => onDelete?.(params.row)}
-        />,
-      ],
-    },
-  ], [onEdit, onDelete]);
-
-  return (
-    <Box sx={{ height: 520, width: '100%' }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-        <Button onClick={onAdd} variant="contained" startIcon={<AddRoundedIcon />}>
-          Nuevo suscriptor
-        </Button>
-        <GridToolbarQuickFilter sx={{ '& input': { minWidth: 260 } }} />
-      </Stack>
-
-      <DataGrid
-        rows={safeRows}
-        getRowId={(r) => r.id ?? r._id ?? `${r.email}-${r.name}`} // fallback por si falta id
-        columns={columns}
-        disableRowSelectionOnClick
-        density="comfortable"
-        pageSizeOptions={[5, 10]}
-        initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
-        sx={{
-          border: 'none',
-          '& .MuiDataGrid-columnHeaders': {
-            borderBottom: (t) => `1px solid ${t.palette.divider}`,
-          },
-          height: 468,
-        }}
-      />
-    </Box>
-  );
-}
-</file>
-
-<file path="erp-frontend/src/core/contexts/ThemeModeContext.jsx">
-// PATH: erp-frontend/src/core/contexts/ThemeModeContext.jsx
-import React, { createContext, useContext, useMemo, useState } from 'react';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { getAppTheme } from '../../theme';
-
-const ThemeModeContext = createContext({ mode: 'dark', toggleMode: () => {} });
-
-export function ThemeModeProvider({ children }) {
-  const [mode, setMode] = useState(() => {
-    const saved = localStorage.getItem('themeMode');
-    return saved === 'light' || saved === 'dark' ? saved : 'dark';
-  });
-
-  const toggleMode = () => {
-    setMode((m) => {
-      const next = m === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('themeMode', next);
-      return next;
-    });
-  };
-
-  const theme = useMemo(() => getAppTheme(mode), [mode]);
-
-  return (
-    <ThemeModeContext.Provider value={{ mode, toggleMode }}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
-    </ThemeModeContext.Provider>
-  );
-}
-
-export const useThemeMode = () => useContext(ThemeModeContext);
-export default ThemeModeContext;
-</file>
-
-<file path="erp-frontend/src/core/navigation/menuConfig.js">
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
-import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
-
-export const ROLES = {
-  ADMIN: 'admin',
-  MANAGER: 'manager',
-  VIEWER: 'viewer',
-};
-
-/**
- * Menú centralizado con íconos y permisos.
- * - El PRIMER ítem es "Subscriptores", como pediste.
- * - Usa `allowedRoles` para controlar visibilidad.
- */
-export const menuItems = [
-  {
-    id: 'subscribers',
-    label: 'Subscriptores',
-    path: '/subscribers',
-    icon: PeopleAltRoundedIcon,
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
-  },
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    path: '/dashboard',
-    icon: DashboardRoundedIcon,
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.VIEWER],
-  },
-];
-
-export function getMenuForRole(role) {
-  return menuItems.filter((item) => !item.allowedRoles || item.allowedRoles.includes(role));
-}
-</file>
-
 <file path="erp-backend/.dockerignore">
 
 </file>
@@ -3397,6 +3224,326 @@ const App = () => (
 export default App;
 </file>
 
+<file path="erp-frontend/src/core/api/apiClient.js">
+import axios from 'axios';
+
+const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
+  headers: { 'Content-Type': 'application/json' }
+});
+
+apiClient.interceptors.request.use((config) => {
+  const raw = localStorage.getItem('user');
+  if (raw) {
+    const { token } = JSON.parse(raw) || {};
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default apiClient;
+</file>
+
+<file path="erp-frontend/src/core/components/SubscriberTable.jsx">
+// PATH: erp-frontend/src/modules/admin/components/SubscriberTable.jsx
+import * as React from 'react';
+import { Box, Button, Stack } from '@mui/material';
+import { DataGrid, GridActionsCellItem, GridToolbarQuickFilter } from '@mui/x-data-grid';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+
+/**
+ * Tabla de Suscriptores (única y robusta):
+ * - Acepta `rows` (preferido) o `data` (compatibilidad).
+ * - Si recibe indefinidos, usa [] y NO rompe.
+ */
+export default function SubscriberTable({ rows, data, onAdd, onEdit, onDelete }) {
+  const safeRows = React.useMemo(() => {
+    if (Array.isArray(rows)) return rows;
+    if (Array.isArray(data)) return data;
+    return [];
+  }, [rows, data]);
+
+  const columns = React.useMemo(() => [
+    { field: 'name', headerName: 'Nombre', flex: 1, minWidth: 180 },
+    { field: 'email', headerName: 'Correo', flex: 1, minWidth: 220 },
+    { field: 'plan', headerName: 'Plan', width: 140, valueGetter: (v, r) => r?.plan ?? '—' },
+    { field: 'status', headerName: 'Estado', width: 140, valueGetter: (v, r) => r?.status ?? '—' },
+    {
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Acciones',
+      width: 120,
+      getActions: (params) => [
+        <GridActionsCellItem
+          key="edit"
+          icon={<EditRoundedIcon />}
+          label="Editar"
+          onClick={() => onEdit?.(params.row)}
+        />,
+        <GridActionsCellItem
+          key="delete"
+          icon={<DeleteOutlineRoundedIcon />}
+          label="Eliminar"
+          onClick={() => onDelete?.(params.row)}
+        />,
+      ],
+    },
+  ], [onEdit, onDelete]);
+
+  return (
+    <Box sx={{ height: 520, width: '100%' }}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+        <Button onClick={onAdd} variant="contained" startIcon={<AddRoundedIcon />}>
+          Nuevo suscriptor
+        </Button>
+        <GridToolbarQuickFilter sx={{ '& input': { minWidth: 260 } }} />
+      </Stack>
+
+      <DataGrid
+        rows={safeRows}
+        getRowId={(r) => r.id ?? r._id ?? `${r.email}-${r.name}`} // fallback por si falta id
+        columns={columns}
+        disableRowSelectionOnClick
+        density="comfortable"
+        pageSizeOptions={[5, 10]}
+        initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
+        sx={{
+          border: 'none',
+          '& .MuiDataGrid-columnHeaders': {
+            borderBottom: (t) => `1px solid ${t.palette.divider}`,
+          },
+          height: 468,
+        }}
+      />
+    </Box>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/core/components/ui/KpiCard.jsx">
+// =============================================
+// 3) src/core/components/ui/KpiCard.jsx
+// =============================================
+import * as React from 'react';
+import { Card, CardContent, Stack, Typography, Avatar, Chip } from '@mui/material';
+
+export default function KpiCard({ icon, label, value, diff, color = 'primary' }) {
+  const positive = typeof diff === 'number' && diff >= 0;
+  return (
+    <Card>
+      <CardContent>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+          <Stack spacing={0.5}>
+            <Typography variant="overline" color="text.secondary">{label}</Typography>
+            <Typography variant="h4">{value}</Typography>
+            {typeof diff === 'number' && (
+              <Chip size="small" label={`${positive ? '+' : ''}${diff}%`} color={positive ? 'success' : 'error'} sx={{ mt: 1, fontWeight: 600 }} />
+            )}
+          </Stack>
+          {icon ? (
+            <Avatar sx={{ bgcolor: (t) => t.palette[color].main, color: 'white', width: 48, height: 48 }}>
+              {icon}
+            </Avatar>
+          ) : null}
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/core/components/ui/PageHeader.jsx">
+// =============================================
+// 2) src/core/components/ui/PageHeader.jsx
+// =============================================
+import * as React from 'react';
+import { Stack, Typography, Breadcrumbs, Link, Box } from '@mui/material';
+
+export default function PageHeader({ title, subtitle, breadcrumbs, actions }) {
+  return (
+    <Stack spacing={2} sx={{ mb: 3 }}>
+      {breadcrumbs?.length ? (
+        <Breadcrumbs separator="/">
+          {breadcrumbs.map((bc, i) => (
+            <Link key={i} color={i === breadcrumbs.length - 1 ? 'text.primary' : 'inherit'} underline={i === breadcrumbs.length - 1 ? 'none' : 'hover'} href={bc.href || '#'}>
+              {bc.label}
+            </Link>
+          ))}
+        </Breadcrumbs>
+      ) : null}
+
+      <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" gap={2}>
+        <Box>
+          <Typography variant="h3" gutterBottom>{title}</Typography>
+          {subtitle ? <Typography variant="subtitle1">{subtitle}</Typography> : null}
+        </Box>
+        {actions ? <Box>{actions}</Box> : null}
+      </Stack>
+    </Stack>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/core/contexts/ThemeModeContext.jsx">
+// PATH: erp-frontend/src/core/contexts/ThemeModeContext.jsx
+import React, { createContext, useContext, useMemo, useState } from 'react';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { getAppTheme } from '../../theme';
+
+const ThemeModeContext = createContext({ mode: 'dark', toggleMode: () => {} });
+
+export function ThemeModeProvider({ children }) {
+  const [mode, setMode] = useState(() => {
+    const saved = localStorage.getItem('themeMode');
+    return saved === 'light' || saved === 'dark' ? saved : 'dark';
+  });
+
+  const toggleMode = () => {
+    setMode((m) => {
+      const next = m === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('themeMode', next);
+      return next;
+    });
+  };
+
+  const theme = useMemo(() => getAppTheme(mode), [mode]);
+
+  return (
+    <ThemeModeContext.Provider value={{ mode, toggleMode }}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </ThemeProvider>
+    </ThemeModeContext.Provider>
+  );
+}
+
+export const useThemeMode = () => useContext(ThemeModeContext);
+export default ThemeModeContext;
+</file>
+
+<file path="erp-frontend/src/core/navigation/menuConfig.js">
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
+
+export const ROLES = {
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  VIEWER: 'viewer',
+};
+
+/**
+ * Menú centralizado con íconos y permisos.
+ * - El PRIMER ítem es "Subscriptores", como pediste.
+ * - Usa `allowedRoles` para controlar visibilidad.
+ */
+export const menuItems = [
+  {
+    id: 'subscribers',
+    label: 'Subscriptores',
+    path: '/subscribers',
+    icon: PeopleAltRoundedIcon,
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
+  },
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    path: '/dashboard',
+    icon: DashboardRoundedIcon,
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.VIEWER],
+  },
+];
+
+export function getMenuForRole(role) {
+  return menuItems.filter((item) => !item.allowedRoles || item.allowedRoles.includes(role));
+}
+</file>
+
+<file path="erp-frontend/src/modules/admin/components/SubscriberTable.jsx">
+import React from 'react';
+import { Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
+
+const SubscriberTable = ({ data }) => (
+  <Table>
+    <TableHead>
+      <TableRow>
+        <TableCell>Nombre</TableCell>
+        <TableCell>Tipo</TableCell>
+        <TableCell>Estado</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {data.map((subscriber) => (
+        <TableRow key={subscriber.id}>
+          <TableCell>{subscriber.name}</TableCell>
+          <TableCell>{subscriber.type}</TableCell>
+          <TableCell>{subscriber.status}</TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
+);
+
+export default SubscriberTable;
+</file>
+
+<file path="erp-frontend/vite.config.js">
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+});
+</file>
+
+<file path="docker-compose.yml">
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: erp_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=erp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    container_name: erp_backend
+    build:
+      context: ./erp-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/erp
+    volumes:
+      - ./erp-backend:/app
+    depends_on:
+      - db
+
+  frontend:
+    container_name: erp_frontend
+    build:
+      context: ./erp-frontend
+      args:
+        - VITE_API_BASE_URL=http://localhost:8000/api/v1
+    ports:
+      - "3000:3000" # puerto del servidor de desarrollo de Vite
+    environment:
+      - CHOKIDAR_USEPOLLING=true # hot-reload dentro de Docker
+    volumes:
+      - ./erp-frontend:/app
+      - /app/node_modules # evita que node_modules local sobreescriba el del contenedor
+    command: ["npm", "start"]
+
+volumes:
+  postgres_data:
+</file>
+
 <file path="erp-frontend/src/core/components/layout/MainLayout.jsx">
 // PATH: erp-frontend/src/core/components/layout/MainLayout.jsx
 import * as React from 'react';
@@ -3582,70 +3729,6 @@ export default function MainLayout() {
 }
 </file>
 
-<file path="erp-frontend/src/core/components/ui/KpiCard.jsx">
-// =============================================
-// 3) src/core/components/ui/KpiCard.jsx
-// =============================================
-import * as React from 'react';
-import { Card, CardContent, Stack, Typography, Avatar, Chip } from '@mui/material';
-
-export default function KpiCard({ icon, label, value, diff, color = 'primary' }) {
-  const positive = typeof diff === 'number' && diff >= 0;
-  return (
-    <Card>
-      <CardContent>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
-          <Stack spacing={0.5}>
-            <Typography variant="overline" color="text.secondary">{label}</Typography>
-            <Typography variant="h4">{value}</Typography>
-            {typeof diff === 'number' && (
-              <Chip size="small" label={`${positive ? '+' : ''}${diff}%`} color={positive ? 'success' : 'error'} sx={{ mt: 1, fontWeight: 600 }} />
-            )}
-          </Stack>
-          {icon ? (
-            <Avatar sx={{ bgcolor: (t) => t.palette[color].main, color: 'white', width: 48, height: 48 }}>
-              {icon}
-            </Avatar>
-          ) : null}
-        </Stack>
-      </CardContent>
-    </Card>
-  );
-}
-</file>
-
-<file path="erp-frontend/src/core/components/ui/PageHeader.jsx">
-// =============================================
-// 2) src/core/components/ui/PageHeader.jsx
-// =============================================
-import * as React from 'react';
-import { Stack, Typography, Breadcrumbs, Link, Box } from '@mui/material';
-
-export default function PageHeader({ title, subtitle, breadcrumbs, actions }) {
-  return (
-    <Stack spacing={2} sx={{ mb: 3 }}>
-      {breadcrumbs?.length ? (
-        <Breadcrumbs separator="/">
-          {breadcrumbs.map((bc, i) => (
-            <Link key={i} color={i === breadcrumbs.length - 1 ? 'text.primary' : 'inherit'} underline={i === breadcrumbs.length - 1 ? 'none' : 'hover'} href={bc.href || '#'}>
-              {bc.label}
-            </Link>
-          ))}
-        </Breadcrumbs>
-      ) : null}
-
-      <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" gap={2}>
-        <Box>
-          <Typography variant="h3" gutterBottom>{title}</Typography>
-          {subtitle ? <Typography variant="subtitle1">{subtitle}</Typography> : null}
-        </Box>
-        {actions ? <Box>{actions}</Box> : null}
-      </Stack>
-    </Stack>
-  );
-}
-</file>
-
 <file path="erp-frontend/src/core/contexts/AuthContext.jsx">
 // PATH: erp-frontend/src/core/contexts/AuthContext.jsx
 import React, { createContext, useContext, useMemo, useState } from 'react';
@@ -3694,34 +3777,6 @@ export function AuthProvider({ children }) {
 
 export const useAuth = () => useContext(AuthContext);
 export default AuthContext;
-</file>
-
-<file path="erp-frontend/src/modules/admin/components/SubscriberTable.jsx">
-import React from 'react';
-import { Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
-
-const SubscriberTable = ({ data }) => (
-  <Table>
-    <TableHead>
-      <TableRow>
-        <TableCell>Nombre</TableCell>
-        <TableCell>Tipo</TableCell>
-        <TableCell>Estado</TableCell>
-      </TableRow>
-    </TableHead>
-    <TableBody>
-      {data.map((subscriber) => (
-        <TableRow key={subscriber.id}>
-          <TableCell>{subscriber.name}</TableCell>
-          <TableCell>{subscriber.type}</TableCell>
-          <TableCell>{subscriber.status}</TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
-);
-
-export default SubscriberTable;
 </file>
 
 <file path="erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx">
@@ -4152,61 +4207,6 @@ export function getAppTheme(mode = 'dark') {
     components: cfg.components,
   });
 }
-</file>
-
-<file path="erp-frontend/vite.config.js">
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-
-export default defineConfig({
-  plugins: [react()],
-});
-</file>
-
-<file path="docker-compose.yml">
-services:
-  db:
-    image: postgres:15-alpine
-    container_name: erp_db
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=1234
-      - POSTGRES_DB=erp
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  backend:
-    container_name: erp_backend
-    build:
-      context: ./erp-backend
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/erp
-    volumes:
-      - ./erp-backend:/app
-    depends_on:
-      - db
-
-  frontend:
-    container_name: erp_frontend
-    build:
-      context: ./erp-frontend
-      args:
-        - VITE_API_BASE_URL=http://localhost:8000/api/v1
-    ports:
-      - "3000:3000" # puerto del servidor de desarrollo de Vite
-    environment:
-      - CHOKIDAR_USEPOLLING=true # hot-reload dentro de Docker
-    volumes:
-      - ./erp-frontend:/app
-      - /app/node_modules # evita que node_modules local sobreescriba el del contenedor
-    command: ["npm", "start"]
-
-volumes:
-  postgres_data:
 </file>
 
 <file path="erp-frontend/package.json">
