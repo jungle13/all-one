@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: erp_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=erp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    container_name: erp_backend
+    build:
+      context: ./erp-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/erp
+    volumes:
+      - ./erp-backend:/app
+    depends_on:
+      - db
+
+  frontend:
+    container_name: erp_frontend
+    build:
+      context: ./erp-frontend
+      args:
+        - REACT_APP_API_BASE_URL=http://localhost:8000/api/v1
+    ports:
+      - "3000:3000" # <-- CAMBIO: Apuntamos al puerto del servidor de desarrollo
+    environment: # <-- AÑADIDO: Para asegurar el hot-reloading dentro de Docker
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./erp-frontend:/app
+      - /app/node_modules # <-- AÑADIDO: Evita que node_modules local sobreescriba el del contenedor
+    command: ["npm", "start"] # <-- AÑADIDO: Le dice al contenedor que ejecute 'npm start'
+
+volumes:
+  postgres_data:

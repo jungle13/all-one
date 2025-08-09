@@ -1,0 +1,27 @@
+/* raffle-frontend/src/components/GaugeChart.module.css */
+.gaugeContainer {
+    position: relative;
+    width: 100%;
+    max-width: 250px; /* Ancho máximo del gráfico */
+    margin: 0 auto;
+}
+
+.gaugeTextContent {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.gaugePercentage {
+    font-size: var(--font-size-3xl); /* Usa nuestras variables globales */
+    font-weight: var(--font-weight-bold);
+    color: #343a40;
+}
+
+.gaugeValues {
+    font-size: var(--font-size-sm);
+    color: #6c757d;
+    font-weight: var(--font-weight-medium);
+}

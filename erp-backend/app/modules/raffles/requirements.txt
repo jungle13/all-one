@@ -1,0 +1,14 @@
+aiohttp
+asyncpg
+bcrypt==3.2.2
+fastapi
+passlib[bcrypt]
+pillow
+psycopg2-binary
+pydantic
+pydantic-settings
+python-dotenv
+python-jose[cryptography]
+python-multipart
+sqlalchemy
+uvicorn

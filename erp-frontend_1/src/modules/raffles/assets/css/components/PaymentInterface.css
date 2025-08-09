@@ -1,0 +1,141 @@
+.payment-app {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.navbar-left, .navbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.menu-button, .notification-button {
+  background: none;
+  border: none;
+  font-size: var(--font-size-2xl);
+  cursor: pointer;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background-color: #0056b3;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.options-bar {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--font-size-md);
+  color: #0056b3;
+  cursor: pointer;
+}
+
+.option-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.payment-container {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.total-balance-card {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.balance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.money-icon, .info-icon {
+  font-size: var(--font-size-2xl);
+}
+
+.balance-title {
+  font-size: var(--font-size-lg);
+  margin-bottom: 10px;
+}
+
+.balance-amount {
+  font-size: var(--font-size-2xl);
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.balance-description {
+  font-size: var(--font-size-sm);
+  color: #666;
+}
+
+.detail-cards-container {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.detail-card {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  text-align: center;
+}
+
+.detail-icon {
+  font-size: var(--font-size-2xl);
+  margin-bottom: 10px;
+}
+
+.detail-title {
+  font-size: var(--font-size-md);
+  margin-bottom: 10px;
+}
+
+.detail-amount {
+  font-size: var(--font-size-xl);
+  font-weight: bold;
+}
+
+.pay-button {
+  width: 100%;
+  padding: 15px;
+  background-color: #0056b3;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: var(--font-size-md);
+  cursor: pointer;
+}
+
+.pay-button:hover {
+  background-color: #004080;
+}

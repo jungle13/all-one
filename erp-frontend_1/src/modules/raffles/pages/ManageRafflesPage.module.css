@@ -1,0 +1,494 @@
+/* raffle-frontend/src/pages/ManageRafflesPage.module.css (Reescrito) */
+
+.manageRafflesPageContainer {
+    padding: 20px; /* Mantenemos el padding para que el contenido no toque los bordes */
+    font-family: Arial, sans-serif;
+    /* background-color: #fff; */ /* Comentado */
+    /* border-radius: 8px; */ /* Comentado */
+    /* box-shadow: 0 2px 10px rgba(0,0,0,0.1); */ /* Comentado */
+    /* margin: 20px auto; */ /* Comentado */
+    /* max-width: 1000px; */ /* Comentado */
+    box-sizing: border-box;
+    width: 100%; /* Aseguramos que ocupe todo el ancho */
+}
+
+/* NUEVA CLASE PARA CONTENER ELEMENTOS ESPECÍFICOS */
+.contentWrapper {
+    max-width: 1000px; /* El ancho que teníamos antes */
+    margin: 0 auto 20px auto; /* Centrado horizontalmente y con margen inferior */
+    width: 100%;
+}
+
+.headerActions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.pageTitle {
+    font-size: 1.8rem;
+    color: #333;
+    margin: 0;
+}
+
+.addRaffleButtonToggle {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.addRaffleButtonToggle:hover {
+    background-color: #0056b3;
+}
+
+.createFormContainer {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    /* margin-bottom: 30px; */ /* El margen ahora lo controla .contentWrapper */
+    border: 1px solid #dee2e6;
+}
+
+.createFormContainer h2 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.createForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.formRow {
+    display: flex;
+    gap: 15px;
+}
+
+.formRow > .formGroup {
+    flex: 1;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+
+.formGroup label {
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #343a40;
+}
+
+.requiredStar {
+    color: #dc3545;
+    margin-left: 2px;
+}
+
+.formGroup input[type="text"],
+.formGroup input[type="number"],
+.formGroup input[type="date"],
+.formGroup input[type="url"],
+.formGroup textarea,
+.formGroup select {
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus,
+.formGroup select:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.sponsorshipSectionContainer {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    padding: 10px 0;
+    border-top: 1px solid #e9ecef;
+    border-bottom: 1px solid #e9ecef;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.formGroupSponsorToggle {
+    display: flex;
+    flex-direction: column;
+}
+
+.formGroupSponsorSelect {
+    flex-grow: 1;
+    min-width: 200px;
+}
+
+.formGroupSponsorSelect label,
+.sponsorshipLabel {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.sponsorSelectDropdown {
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: white;
+    height: 38px;
+}
+
+.formGroupSponsorEdit {
+    align-self: flex-end;
+}
+
+.toggleSwitchContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 38px;
+}
+
+.toggleSwitchCheckbox {
+    height: 0; width: 0; visibility: hidden;
+}
+
+.toggleSwitchLabel {
+    cursor: pointer; text-indent: -9999px; width: 50px; height: 28px;
+    background: grey; display: block; border-radius: 100px; position: relative;
+}
+
+.toggleSwitchLabel:after {
+    content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px;
+    background: #fff; border-radius: 90px; transition: 0.3s;
+}
+
+.toggleSwitchCheckbox:checked + .toggleSwitchLabel { background: #007bff; }
+
+.toggleSwitchCheckbox:checked + .toggleSwitchLabel:after {
+    left: calc(100% - 3px); transform: translateX(-100%);
+}
+
+.toggleSwitchLabel:active:after { width: 30px; }
+
+.toggleStatusText { font-size: 0.9rem; color: #495057; font-weight: 500; }
+
+.editSponsorButton {
+    background-color: #6c757d; color: white; border: none;
+    padding: 8px 12px; font-size: 0.85rem; border-radius: 4px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    transition: background-color 0.2s ease;
+    height: 38px;
+}
+
+.editSponsorButton:hover { background-color: #5a6268; }
+
+.dropzone {
+    border: 2px dashed #ced4da; border-radius: 8px; padding: 20px; text-align: center;
+    cursor: pointer; background-color: #fff; transition: border-color 0.2s ease, background-color 0.2s ease;
+    min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 5px;
+}
+.dropzoneActive { border-color: #007bff; background-color: #e9f5ff; }
+.dropzonePrompt p { margin: 5px 0; font-size: 0.9rem; color: #495057; }
+.dropzonePrompt span { font-size: 0.75rem; color: #6c757d; }
+.uploadIcon { font-size: 2rem; color: #007bff; margin-bottom: 8px; }
+.imagePreviewContainer { position: relative; display: inline-block; max-width: 100%; }
+.imagePreview { max-width: 100%; max-height: 150px; border-radius: 4px; border: 1px solid #dee2e6; }
+.removeImageButton {
+    position: absolute; top: 5px; right: 5px; background-color: rgba(0, 0, 0, 0.6); color: white;
+    border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 0.9rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: background-color 0.2s ease;
+}
+.removeImageButton:hover { background-color: rgba(220, 53, 69, 0.8); }
+
+/* Modal Styles */
+.modalOverlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+}
+.modalContent {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.sponsorModalContent {
+    max-width: 600px;
+}
+.modalHeader {
+    display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6; margin-bottom: 15px;
+}
+.modalHeader h3 { margin: 0; font-size: 1.3rem; }
+.modalCloseButton { background: none; border: none; font-size: 1.5rem; color: #6c757d; cursor: pointer; }
+.modalBody { padding-bottom: 15px; }
+.modalFooter {
+    display: flex; justify-content: flex-end; gap: 10px; padding-top: 15px; border-top: 1px solid #dee2e6;
+}
+.modalButton {
+    padding: 8px 15px; border-radius: 4px; font-size: 0.9rem; font-weight: 500; cursor: pointer;
+    transition: background-color 0.2s ease; border: 1px solid transparent;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.modalButtonConfirm {
+    background-color: #28a745; color: white; border-color: #28a745;
+}
+.modalButtonConfirm:hover { background-color: #218838; }
+.modalButtonCancel {
+    background-color: #6c757d; color: white; border-color: #6c757d;
+}
+.modalButtonCancel:hover { background-color: #5a6268; }
+
+.formErrorMessage {
+    color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px;
+    border-radius: 4px; margin-bottom: 15px; text-align: center; font-size: 0.9rem;
+}
+
+.formActionsContainer {
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.submitFormButton {
+    background-color: #28a745; color: white; padding: 12px 20px; border: none; border-radius: 5px;
+    font-size: 1rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+}
+.submitFormButton:hover { background-color: #218838; }
+
+.formLockedMessage {
+    background-color: #fff3cd;
+    color: #664d03;
+    border: 1px solid #ffecb5;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+.formLockedMessage p {
+    margin: 0;
+}
+
+.manageCard { position: relative; }
+
+.cardActionsManage {
+    padding: 10px 15px;
+    border-top: 1px solid #f0f0f0;
+    background-color: #f9f9f9;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;
+}
+
+.editButton, .viewButton {
+    border-radius: 5px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    text-decoration: none;
+}
+
+.editButton {
+    background-color: #ffc107;
+    color: #212529;
+    border: 1px solid #e0a800;
+}
+.editButton:hover {
+    background-color: #e0a800;
+    border-color: #c69500;
+}
+
+.viewButton {
+    background-color: #17a2b8;
+    color: white;
+    border: 1px solid #138496;
+}
+.viewButton:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+}
+
+.finishedRaffleList {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+    /* Aplicamos el wrapper aquí para mantener el contenido de la lista centrado */
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.finishedRaffleListItem {
+    display: flex; background-color: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px;
+    padding: 15px; margin-bottom: 15px; gap: 15px; align-items: flex-start;
+}
+.finishedRaffleImageMiniContainer {
+    width: 80px; height: 80px; background-color: #e9ecef; display: flex; align-items: center;
+    justify-content: center; border-radius: 4px; overflow: hidden; flex-shrink: 0;
+}
+.finishedRaffleImageMini { width: 100%; height: 100%; object-fit: cover; }
+.finishedImagePlaceholderIconMini { font-size: 2rem; color: #adb5bd; }
+.finishedRaffleItemContent { flex-grow: 1; font-size: 0.9rem; }
+.finishedRaffleName { font-size: 1.1rem; font-weight: 600; color: #333; margin-top: 0; margin-bottom: 8px; }
+.finishedRaffleItemContent p { margin: 4px 0; color: #555; display: flex; align-items: center; gap: 6px; }
+.finishedRaffleItemActions { flex-shrink: 0; margin-left: auto; align-self: center; }
+
+/* Pega esto al final de tu archivo ManageRafflesPage.module.css */
+
+.tagInputContainer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: white;
+    cursor: text; /* Hace que parezca un campo de texto */
+}
+
+.tagInputContainer:focus-within {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #007bff;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.tagRemoveButton {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;
+    margin-left: 4px;
+    line-height: 1;
+}
+
+.tagInput {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    padding: 4px;
+    font-size: 1rem;
+    min-width: 80px; /* Espacio mínimo para escribir */
+    background-color: transparent;
+}
+
+@media (max-width: 768px) {
+    .finishedRaffleListItem { flex-direction: column; align-items: stretch; }
+    .finishedRaffleImageMiniContainer { width: 100%; height: 150px; margin-bottom: 10px; }
+    .finishedImagePlaceholderIconMini { font-size: 3rem; }
+    .finishedRaffleItemActions { margin-left: 0; margin-top: 10px; align-self: flex-start; }
+    .sponsorModalContent { max-width: 95%; }
+    .sponsorshipSectionContainer { flex-direction: column; align-items: stretch; gap: 10px; }
+    .formGroupSponsorToggle, .formGroupSponsorSelect, .formGroupSponsorEdit {
+        width: 100%;
+    }
+    .formGroupSponsorEdit {
+        align-self: stretch;
+    }
+    .editSponsorButton {
+        width: 100%;
+        justify-content: center;
+    }
+    .cardActionsManage .editButton,
+    .cardActionsManage .viewButton {
+        flex-basis: calc(50% - 5px);
+        justify-content: center;
+    }
+}
+
+@media (max-width: 600px) {
+    .formRow { flex-direction: column; gap: 15px; }
+    .headerActions { flex-direction: column; align-items: stretch; gap: 10px; }
+    .pageTitle { text-align: center; }
+    .addRaffleButtonToggle { width: 100%; justify-content: center; }
+
+    .cardActionsManage .editButton,
+    .cardActionsManage .viewButton {
+        flex-basis: 100%;
+        justify-content: center;
+    }
+}
+
+/* --- Responsive Design --- */
+
+@media (max-width: 992px) {
+  .contentWrapper {
+    padding: 0 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageTitle {
+    font-size: 1.5rem;
+  }
+
+  .addRaffleButtonToggle {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+  }
+
+  .formRow {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .formGroup {
+    margin-bottom: 15px;
+  }
+}

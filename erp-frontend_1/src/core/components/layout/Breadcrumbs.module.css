@@ -1,0 +1,54 @@
+/* raffle-frontend/src/components/Breadcrumbs.module.css */
+.breadcrumbsContainer {
+    padding: 10px 15px;
+    background-color: #f8f9fa; /* Un fondo sutil, o puedes quitarlo */
+    border-bottom: 1px solid #e9ecef;
+    font-size: var(--font-size-sm);
+    margin-bottom: 15px; /* Espacio antes del contenido de la página */
+}
+
+.breadcrumbList {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+}
+
+.breadcrumbItem {
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumbItem a {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumbItem a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.separator {
+    margin: 0 8px;
+    color: #6c757d;
+}
+
+.current {
+    color: #495057; /* Color para el elemento actual (no es un enlace) */
+    font-weight: 500;
+}
+
+/* Ajustes para pantallas pequeñas si es necesario */
+@media (max-width: 768px) {
+    .breadcrumbsContainer {
+        padding: 8px 10px;
+        font-size: var(--font-size-xs);
+        margin-bottom: 10px;
+    }
+    .separator {
+        margin: 0 5px;
+    }
+}

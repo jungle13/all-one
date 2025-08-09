@@ -1,0 +1,148 @@
+/* raffle-frontend/src/components/SidebarMenu.module.css */
+
+.sidebarContainer {
+    width: 260px;
+    flex-shrink: 0;
+    background-color: #212529;
+    border-right: 1px solid #343a40;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: width 0.3s ease-in-out, transform 0.3s ease-in-out;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+}
+
+.sidebarHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    height: 45px;
+}
+
+.menuText {
+    color: #dee2e6;
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.separator {
+    height: 1px;
+    background-color: #343a40;
+    margin-bottom: 20px;
+}
+
+.sidebarNav {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.navLink {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 5px;
+    color: #dee2e6;
+    text-decoration: none;
+    font-size: var(--font-size-md);
+    font-weight: 500;
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navLink:hover { background-color: #343a40; color: #ffffff; }
+.activeLink { background-color: #007bff; color: white !important; }
+.activeLink .navLinkIcon { color: white !important; }
+
+.navLinkIcon {
+    margin-right: 15px;
+    width: 20px;
+    text-align: center;
+    color: #adb5bd;
+    font-size: var(--font-size-lg);
+    transition: margin 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navLinkText {
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.sidebarFooter {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid #343a40;
+    overflow: hidden;
+}
+
+.toggleButton, .logoutButton {
+    background-color: transparent;
+    color: #adb5bd;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: var(--font-size-lg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+}
+.toggleButton:hover, .logoutButton:hover { background-color: #343a40; }
+.logoutButton { 
+    color: #dc3545; 
+    width: 100%;
+    padding: 12px 15px;
+    font-size: var(--font-size-md);
+}
+.logoutIcon { margin-right: 15px; width: 20px; }
+
+/* --- ESTILOS PARA CUANDO EL SIDEBAR ESTÁ COLAPSADO --- */
+.sidebarContainer.collapsed {
+    width: 80px;
+    padding: 20px 10px;
+}
+.sidebarContainer.collapsed .menuText {
+    opacity: 0;
+    width: 0;
+}
+.sidebarContainer.collapsed .navLinkText {
+    opacity: 0;
+    width: 0;
+}
+.sidebarContainer.collapsed .navLinkIcon {
+    margin: 0 auto;
+}
+.sidebarContainer.collapsed .navLink {
+    justify-content: center;
+}
+.sidebarContainer.collapsed .logoutButton {
+    justify-content: center;
+}
+.sidebarContainer.collapsed .logoutIcon {
+    margin-right: 0;
+}
+
+/* --- Responsive Design --- */
+
+@media (max-width: 768px) {
+  .sidebarContainer {
+    transform: translateX(-100%);
+  }
+
+  .sidebarContainer.open {
+    transform: translateX(0);
+  }
+}

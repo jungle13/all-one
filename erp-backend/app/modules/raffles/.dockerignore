@@ -1,0 +1,22 @@
+# raffle-backend/.dockerignore
+
+
+# Ignorar archivos de configuración de Docker y Git
+Dockerfile
+.dockerignore
+.git
+.gitignore
+
+# Ignorar entornos virtuales de Python
+venv/
+venv-raffle-bk/
+.venv/
+
+# Ignorar caché de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignorar archivos de entorno local
+.env

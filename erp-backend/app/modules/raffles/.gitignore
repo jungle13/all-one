@@ -1,0 +1,16 @@
+# Ignore Python virtual environment
+venv-raffle-bk/
+raffle-bk/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore environment variables
+.env
+
+# Ignore IDE and editor files
+.vscode/
+.idea/
