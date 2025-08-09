@@ -3244,84 +3244,6 @@ apiClient.interceptors.request.use((config) => {
 export default apiClient;
 </file>
 
-<file path="erp-frontend/src/core/components/SubscriberTable.jsx">
-// PATH: erp-frontend/src/modules/admin/components/SubscriberTable.jsx
-import * as React from 'react';
-import { Box, Button, Stack } from '@mui/material';
-import { DataGrid, GridActionsCellItem, GridToolbarQuickFilter } from '@mui/x-data-grid';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-
-/**
- * Tabla de Suscriptores (única y robusta):
- * - Acepta `rows` (preferido) o `data` (compatibilidad).
- * - Si recibe indefinidos, usa [] y NO rompe.
- */
-export default function SubscriberTable({ rows, data, onAdd, onEdit, onDelete }) {
-  const safeRows = React.useMemo(() => {
-    if (Array.isArray(rows)) return rows;
-    if (Array.isArray(data)) return data;
-    return [];
-  }, [rows, data]);
-
-  const columns = React.useMemo(() => [
-    { field: 'name', headerName: 'Nombre', flex: 1, minWidth: 180 },
-    { field: 'email', headerName: 'Correo', flex: 1, minWidth: 220 },
-    { field: 'plan', headerName: 'Plan', width: 140, valueGetter: (v, r) => r?.plan ?? '—' },
-    { field: 'status', headerName: 'Estado', width: 140, valueGetter: (v, r) => r?.status ?? '—' },
-    {
-      field: 'actions',
-      type: 'actions',
-      headerName: 'Acciones',
-      width: 120,
-      getActions: (params) => [
-        <GridActionsCellItem
-          key="edit"
-          icon={<EditRoundedIcon />}
-          label="Editar"
-          onClick={() => onEdit?.(params.row)}
-        />,
-        <GridActionsCellItem
-          key="delete"
-          icon={<DeleteOutlineRoundedIcon />}
-          label="Eliminar"
-          onClick={() => onDelete?.(params.row)}
-        />,
-      ],
-    },
-  ], [onEdit, onDelete]);
-
-  return (
-    <Box sx={{ height: 520, width: '100%' }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-        <Button onClick={onAdd} variant="contained" startIcon={<AddRoundedIcon />}>
-          Nuevo suscriptor
-        </Button>
-        <GridToolbarQuickFilter sx={{ '& input': { minWidth: 260 } }} />
-      </Stack>
-
-      <DataGrid
-        rows={safeRows}
-        getRowId={(r) => r.id ?? r._id ?? `${r.email}-${r.name}`} // fallback por si falta id
-        columns={columns}
-        disableRowSelectionOnClick
-        density="comfortable"
-        pageSizeOptions={[5, 10]}
-        initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
-        sx={{
-          border: 'none',
-          '& .MuiDataGrid-columnHeaders': {
-            borderBottom: (t) => `1px solid ${t.palette.divider}`,
-          },
-          height: 468,
-        }}
-      />
-    </Box>
-  );
-}
-</file>
-
 <file path="erp-frontend/src/core/components/ui/KpiCard.jsx">
 // =============================================
 // 3) src/core/components/ui/KpiCard.jsx
@@ -3424,43 +3346,6 @@ export const useThemeMode = () => useContext(ThemeModeContext);
 export default ThemeModeContext;
 </file>
 
-<file path="erp-frontend/src/core/navigation/menuConfig.js">
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
-import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
-
-export const ROLES = {
-  ADMIN: 'admin',
-  MANAGER: 'manager',
-  VIEWER: 'viewer',
-};
-
-/**
- * Menú centralizado con íconos y permisos.
- * - El PRIMER ítem es "Subscriptores", como pediste.
- * - Usa `allowedRoles` para controlar visibilidad.
- */
-export const menuItems = [
-  {
-    id: 'subscribers',
-    label: 'Subscriptores',
-    path: '/subscribers',
-    icon: PeopleAltRoundedIcon,
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
-  },
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    path: '/dashboard',
-    icon: DashboardRoundedIcon,
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.VIEWER],
-  },
-];
-
-export function getMenuForRole(role) {
-  return menuItems.filter((item) => !item.allowedRoles || item.allowedRoles.includes(role));
-}
-</file>
-
 <file path="erp-frontend/src/modules/admin/components/SubscriberTable.jsx">
 import React from 'react';
 import { Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
@@ -3544,189 +3429,33 @@ volumes:
   postgres_data:
 </file>
 
-<file path="erp-frontend/src/core/components/layout/MainLayout.jsx">
-// PATH: erp-frontend/src/core/components/layout/MainLayout.jsx
-import * as React from 'react';
-import { styled } from '@mui/material/styles';
-import {
-  AppBar,
-  Avatar,
-  Badge,
-  Box,
-  CssBaseline,
-  Divider,
-  Drawer as MuiDrawer,
-  IconButton,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Toolbar,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
-import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
-import Brightness4RoundedIcon from '@mui/icons-material/Brightness4Rounded';
-import Brightness7RoundedIcon from '@mui/icons-material/Brightness7Rounded';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { getMenuForRole } from '../../navigation/menuConfig';
-import { useThemeMode } from '../../contexts/ThemeModeContext';
-import AuthContext from '../../contexts/AuthContext';
+<file path="erp-frontend/src/core/components/SubscriberTable.jsx">
+// PATH: erp-frontend/src/modules/admin/components/SubscriberTable.jsx
+import React from 'react';
+import { Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
 
-const drawerWidth = 264;
-const collapsedWidth = 80;
+const SubscriberTable = ({ data = [] }) => (
+  <Table>
+    <TableHead>
+      <TableRow>
+        <TableCell>Nombre</TableCell>
+        <TableCell>Tipo</TableCell>
+        <TableCell>Estado</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {data.map((subscriber) => (
+        <TableRow key={subscriber.id}>
+          <TableCell>{subscriber.name}</TableCell>
+          <TableCell>{subscriber.type}</TableCell>
+          <TableCell>{subscriber.status}</TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
+);
 
-const Drawer = styled(MuiDrawer, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})(({ theme, open }) => ({
-  width: open ? drawerWidth : collapsedWidth,
-  flexShrink: 0,
-  whiteSpace: 'nowrap',
-  boxSizing: 'border-box',
-  '& .MuiDrawer-paper': {
-    width: open ? drawerWidth : collapsedWidth,
-    borderRight: `1px solid ${theme.palette.divider}`,
-    overflowX: 'hidden',
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.shorter,
-    }),
-    // SIN bordes redondeados (requisito):
-    borderRadius: 0,
-  },
-}));
-
-export default function MainLayout() {
-  const { mode, toggleMode } = useThemeMode();
-  const { user } = React.useContext(AuthContext) || {};
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const [open, setOpen] = React.useState(true);
-  const menu = React.useMemo(() => getMenuForRole(user?.role || 'admin'), [user]);
-
-  const handleToggleDrawer = () => setOpen((v) => !v);
-
-  return (
-    <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
-      <CssBaseline />
-
-      {/* Header */}
-      <AppBar
-        position="fixed"
-        color="default"
-        elevation={0}
-        sx={{
-          backgroundColor: (t) => t.palette.background.paper,
-          borderBottom: (t) => `1px solid ${t.palette.divider}`,
-          // sombra sutil bajo el header
-          boxShadow: (t) =>
-            t.palette.mode === 'light'
-              ? '0 1px 0 rgba(15, 23, 42, 0.06)'
-              : '0 1px 0 rgba(0,0,0,0.4)',
-          zIndex: (t) => t.zIndex.drawer + 1,
-        }}
-      >
-        <Toolbar
-          sx={{
-            // 🔧 clave: forzar color de texto/íconos que heredan
-            color: 'text.primary',
-            gap: 1,
-          }}
-        >
-          <IconButton onClick={handleToggleDrawer} edge="start" color="inherit">
-            <MenuRoundedIcon />
-          </IconButton>
-
-          <Typography variant="h6" noWrap sx={{ ml: 1, flexGrow: 1 }}>
-            ERP Admin
-          </Typography>
-
-          <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
-            <IconButton color="inherit" onClick={toggleMode}>
-              {mode === 'dark' ? <Brightness7RoundedIcon /> : <Brightness4RoundedIcon />}
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Notificaciones">
-            <IconButton color="inherit">
-              <Badge color="error" variant="dot">
-                <NotificationsNoneRoundedIcon />
-              </Badge>
-            </IconButton>
-          </Tooltip>
-
-          <Avatar
-            sx={{
-              width: 32,
-              height: 32,
-              ml: 1,
-              border: (t) => `1px solid ${t.palette.divider}`,
-            }}
-          >
-            {/* Simulación de foto de perfil */}
-            {user?.name?.[0]?.toUpperCase() || 'A'}
-          </Avatar>
-        </Toolbar>
-      </AppBar>
-
-      {/* Sidebar */}
-      <Drawer variant="permanent" open={open}>
-        <Toolbar />
-        <Divider />
-        <List sx={{ py: 1 }}>
-          {menu.map((item) => {
-            const ActiveIcon = item.icon;
-            const active = location.pathname.startsWith(item.path);
-            return (
-              <ListItemButton
-                key={item.id}
-                component={NavLink}
-                to={item.path}
-                selected={active}
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(item.path);
-                }}
-                sx={{
-                  mx: 1,
-                  my: 0.5,
-                  borderRadius: 2,
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <ActiveIcon color={active ? 'primary' : 'inherit'} />
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  primaryTypographyProps={{ fontWeight: active ? 700 : 500 }}
-                  sx={{ opacity: open ? 1 : 0, transition: 'opacity .2s' }}
-                />
-              </ListItemButton>
-            );
-          })}
-        </List>
-      </Drawer>
-
-      {/* Contenido */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          minWidth: 0,
-          backgroundColor: (t) =>
-            t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.background.default,
-        }}
-      >
-        <Toolbar />
-        <Box component="div" sx={{ p: 3 }}>
-          <Outlet />
-        </Box>
-      </Box>
-    </Box>
-  );
-}
+export default SubscriberTable;
 </file>
 
 <file path="erp-frontend/src/core/contexts/AuthContext.jsx">
@@ -3779,114 +3508,48 @@ export const useAuth = () => useContext(AuthContext);
 export default AuthContext;
 </file>
 
-<file path="erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx">
-// PATH: erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx
-import * as React from 'react';
-import {
-  Button,
-  Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  MenuItem,
-  Paper,
-  Stack,
-  TextField,
-} from '@mui/material';
-import PageHeader from '../../../core/components/ui/PageHeader';
-import SubscriberTable from '../components/SubscriberTable';
+<file path="erp-frontend/src/core/navigation/menuConfig.js">
+// PATH: erp-frontend/src/core/navigation/menuConfig.js
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
 
-// Datos de prueba
-const seed = [
-  { id: 1, name: 'Luis Pérez',  email: 'luis@acme.co',  plan: 'Pro',        status: 'Activo' },
-  { id: 2, name: 'María Rojas', email: 'maria@acme.co', plan: 'Free',       status: 'Pendiente' },
-  { id: 3, name: 'Carlos Díaz', email: 'carlos@acme.co',plan: 'Pro',        status: 'Suspendido' },
-  { id: 4, name: 'Ana Torres',  email: 'ana@acme.co',   plan: 'Enterprise', status: 'Activo' },
+export const ROLES = {
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  VIEWER: 'viewer',
+};
+
+/**
+ * Menú centralizado con íconos y permisos.
+ * - El PRIMER ítem es "Subscriptores".
+ * - Usa `allowedRoles` para visibilidad por rol.
+ */
+export const menuItems = [
+  {
+    id: 'subscribers',
+    label: 'Subscriptores',
+    path: '/subscribers',
+    icon: PeopleAltRoundedIcon,
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
+  },
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    path: '/dashboard',
+    icon: DashboardRoundedIcon,
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.VIEWER],
+  },
 ];
 
-export default function SubscriberListPage() {
-  const [rows, setRows] = React.useState(seed); // siempre array
-  const [open, setOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState(null);
-  const [form, setForm] = React.useState({ name: '', email: '', plan: 'Free', status: 'Pendiente' });
-
-  const showCreate = () => {
-    setEditing(null);
-    setForm({ name: '', email: '', plan: 'Free', status: 'Pendiente' });
-    setOpen(true);
-  };
-
-  const showEdit = (row) => {
-    setEditing(row);
-    setForm({ name: row.name ?? '', email: row.email ?? '', plan: row.plan ?? 'Free', status: row.status ?? 'Pendiente' });
-    setOpen(true);
-  };
-
-  const handleDelete = (row) => setRows((prev) => prev.filter((r) => r.id !== row.id));
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!form.name || !form.email) {
-      alert('Nombre y correo son obligatorios.');
-      return;
-    }
-    if (editing) {
-      setRows((prev) => prev.map((r) => (r.id === editing.id ? { ...editing, ...form } : r)));
-    } else {
-      const newId = Math.max(0, ...rows.map((r) => r.id)) + 1;
-      setRows((prev) => [{ id: newId, ...form }, ...prev]);
-    }
-    setOpen(false);
-  };
-
-  return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
-      <PageHeader
-        title="Suscriptores"
-        subtitle="Gestión de suscriptores del ERP"
-        breadcrumbs={[{ label: 'Inicio', href: '/' }, { label: 'Suscriptores' }]}
-        actions={<Button variant="contained" onClick={showCreate}>Nuevo</Button>}
-      />
-
-      <Paper sx={{ p: 2 }}>
-        {/* rows SIEMPRE definido */}
-        <SubscriberTable rows={rows} onAdd={showCreate} onEdit={showEdit} onDelete={handleDelete} />
-      </Paper>
-
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" component="form" onSubmit={handleSubmit}>
-        <DialogTitle>{editing ? 'Editar suscriptor' : 'Nuevo suscriptor'}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Nombre"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              required autoFocus
-            />
-            <TextField
-              label="Correo"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              required
-            />
-            <TextField select label="Plan" value={form.plan} onChange={(e) => setForm((f) => ({ ...f, plan: e.target.value }))}>
-              {['Free', 'Pro', 'Enterprise'].map((opt) => (<MenuItem key={opt} value={opt}>{opt}</MenuItem>))}
-            </TextField>
-            <TextField select label="Estado" value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}>
-              {['Activo', 'Pendiente', 'Suspendido'].map((opt) => (<MenuItem key={opt} value={opt}>{opt}</MenuItem>))}
-            </TextField>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button type="submit" variant="contained">Guardar</Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
-  );
+export function getMenuForRole(role) {
+  return menuItems.filter((item) => !item.allowedRoles || item.allowedRoles.includes(role));
 }
+
+// Compatibilidad: si en algún archivo se importó { menuConfig }
+export const menuConfig = menuItems;
+
+// (Opcional) default export si alguien usa `import menu from ...`
+export default menuItems;
 </file>
 
 <file path="erp-frontend/src/modules/dashboard/pages/Dashboard.jsx">
@@ -4243,6 +3906,186 @@ export function getAppTheme(mode = 'dark') {
 }
 </file>
 
+<file path="erp-frontend/src/core/components/layout/MainLayout.jsx">
+// PATH: erp-frontend/src/core/components/layout/MainLayout.jsx
+import * as React from 'react';
+import {
+  AppBar as MuiAppBar,
+  Avatar,
+  Badge,
+  Box,
+  Divider,
+  Drawer as MuiDrawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
+import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+
+import AuthContext from '../../contexts/AuthContext';
+import { getMenuForRole } from '../../navigation/menuConfig';
+import { useThemeMode } from '../../contexts/ThemeModeContext';
+
+const DRAWER_WIDTH = 260;
+const COLLAPSED_WIDTH = 80;
+
+// AppBar sin bordes redondeados; el color se controla por theme
+const AppBar = styled(MuiAppBar)(({ theme }) => ({
+  zIndex: theme.zIndex.drawer + 1,
+}));
+
+// Drawer mini-variant SIN bordes redondeados
+const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
+  ({ theme, open }) => ({
+    width: open ? DRAWER_WIDTH : COLLAPSED_WIDTH,
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
+    boxSizing: 'border-box',
+    '& .MuiDrawer-paper': {
+      borderRadius: 0, // sin bordes redondeados
+      width: open ? DRAWER_WIDTH : COLLAPSED_WIDTH,
+      backgroundColor: theme.palette.background.paper,
+      borderRight: `1px solid ${theme.palette.divider}`,
+      transition: 'width 220ms ease',
+      overflowX: 'hidden',
+    },
+  })
+);
+
+function NavItem({ to, icon: Icon, label, collapsed }) {
+  const location = useLocation();
+  const active = location.pathname === to;
+  return (
+    <Tooltip title={collapsed ? label : ''} placement="right">
+      <ListItemButton
+        component={NavLink}
+        to={to}
+        selected={active}
+        sx={{
+          mx: 1,
+          borderRadius: 2,
+          '&.Mui-selected': {
+            backgroundColor: 'rgba(34,197,94,0.18)',
+          },
+        }}
+      >
+        <ListItemIcon sx={{ minWidth: 36, color: active ? 'primary.main' : 'text.secondary' }}>
+          <Icon />
+        </ListItemIcon>
+        {!collapsed && <ListItemText primary={label} />}
+      </ListItemButton>
+    </Tooltip>
+  );
+}
+
+export default function MainLayout() {
+  const [open, setOpen] = React.useState(true);
+  const { mode, toggleMode } = useThemeMode();
+  const { user } = React.useContext(AuthContext) || {};
+  const navigate = useNavigate();
+  const collapsed = !open;
+
+  const menu = React.useMemo(() => getMenuForRole(user?.role || 'admin'), [user]);
+
+  return (
+    <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
+      {/* AppBar: color default -> usa text.primary del theme (no queda blanco en light) */}
+      <AppBar position="fixed" color="default" elevation={0} sx={{ borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
+        <Toolbar sx={{ gap: 1, color: 'text.primary' }}>
+          <IconButton
+            edge="start"
+            onClick={() => setOpen((v) => !v)}
+            color="inherit"
+            sx={{ mr: 1 }}
+            aria-label="toggle sidebar"
+          >
+            {open ? <ChevronLeftRoundedIcon /> : <MenuRoundedIcon />}
+          </IconButton>
+
+          <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 0.2 }}>
+            ERP Admin
+          </Typography>
+
+          <Box sx={{ flex: 1 }} />
+
+          {/* Theme toggle */}
+          <Tooltip title={mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>
+            <IconButton color="inherit" onClick={toggleMode} aria-label="toggle theme">
+              {mode === 'dark' ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
+            </IconButton>
+          </Tooltip>
+
+          {/* Notificaciones */}
+          <IconButton color="inherit" aria-label="notifications" sx={{ ml: 1 }}>
+            <Badge variant="dot" color="primary">
+              <NotificationsNoneRoundedIcon />
+            </Badge>
+          </IconButton>
+
+          {/* Perfil */}
+          <IconButton onClick={() => navigate('/profile')} sx={{ ml: 1 }} color="inherit" aria-label="perfil">
+            <Avatar
+              alt="Usuario"
+              sx={{
+                width: 32,
+                height: 32,
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                fontSize: 14,
+                fontWeight: 700,
+              }}
+            >
+              {user?.email?.[0]?.toUpperCase() || 'U'}
+            </Avatar>
+          </IconButton>
+        </Toolbar>
+      </AppBar>
+
+      {/* Sidebar */}
+      <Drawer variant="permanent" open={open}>
+        <Toolbar />
+        <Divider />
+        <List sx={{ mt: 1 }}>
+          {menu.map((item) => (
+            <NavItem
+              key={item.id}
+              to={item.path}
+              icon={item.icon}
+              label={item.label}
+              collapsed={collapsed}
+            />
+          ))}
+        </List>
+      </Drawer>
+
+      {/* Contenido */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          minWidth: 0,
+          p: 3,
+        }}
+      >
+        <Toolbar /> {/* offset del AppBar */}
+        <Outlet />
+      </Box>
+    </Box>
+  );
+}
+</file>
+
 <file path="erp-frontend/src/main.jsx">
 // PATH: erp-frontend/src/main.jsx
 import React from 'react';
@@ -4264,6 +4107,60 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </ThemeModeProvider>
   </React.StrictMode>
 );
+</file>
+
+<file path="erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx">
+// PATH: erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx
+import * as React from 'react';
+import { Container, Button } from '@mui/material';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import SubscriberTable from '../components/SubscriberTable';
+
+const seedRows = [
+  { id: 1, name: 'Empresa ABC', email: 'contacto@abc.com', plan: 'Pro', status: 'Activa' },
+  { id: 2, name: 'Juan Pérez',  email: 'juan@correo.com',   plan: 'Free', status: 'Pendiente' },
+  { id: 3, name: 'María Rojas', email: 'maria@dominio.co',  plan: 'Pro',  status: 'Suspendida' },
+];
+
+export default function SubscriberListPage() {
+  const [rows, setRows] = React.useState(seedRows);
+
+  const handleAdd = () => {
+    // TODO: abrir modal/form real
+    const nextId = Math.max(0, ...rows.map(r => r.id)) + 1;
+    setRows((prev) => [
+      ...prev,
+      { id: nextId, name: 'Nuevo suscriptor', email: 'nuevo@demo.com', plan: 'Free', status: 'Activa' },
+    ]);
+  };
+
+  const handleEdit = (row) => {
+    // TODO: abrir modal/form edición
+    console.log('Editar', row);
+  };
+
+  const handleDelete = (row) => {
+    setRows((prev) => prev.filter((r) => r.id !== row.id));
+  };
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Suscriptores"
+        subtitle="Administra los suscriptores del ERP"
+        breadcrumbs={[{ label: 'Inicio', href: '/' }, { label: 'Suscriptores' }]}
+        actions={<Button variant="contained" onClick={handleAdd}>Nuevo</Button>}
+      />
+
+      <SubscriberTable
+        rows={rows}
+        onAdd={handleAdd}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
+    </Container>
+  );
+}
 </file>
 
 <file path="erp-frontend/src/modules/auth/pages/LoginPage.jsx">
