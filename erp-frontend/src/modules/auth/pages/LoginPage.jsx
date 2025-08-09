@@ -1,83 +1,101 @@
-import React, { useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-import CssBaseline from '@mui/material/CssBaseline';
-import TextField from '@mui/material/TextField';
-import Box from '@mui/material/Box';
+// =============================================
+// 4) src/modules/auth/pages/LoginPage.jsx
+// =============================================
+import * as React from 'react';
+import { useState } from 'react';
+import {
+  Avatar,
+  Box,
+  Button,
+  Checkbox,
+  Container,
+  FormControlLabel,
+  InputAdornment,
+  Link,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import AuthContext from '../../../core/contexts/AuthContext';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import KeyIcon from '@mui/icons-material/Key';
 
-const theme = createTheme();
 
-const LoginPage = () => {
-  const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
+export default function LoginPage() {
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    const email = data.get('email');
+    const password = data.get('password');
     try {
-      await login({
-        email: data.get('email'),
-        password: data.get('password'),
-      });
-      navigate('/');
-    } catch (error) {
-      console.error('Error de autenticación', error);
+      setLoading(true);
+      // TODO: replace with your auth context / API call
+      // demo behaviour: accept admin@example.com / password
+      if (email === 'admin@example.com' && password === 'password') {
+        // navigate('/dashboard') if you use react-router
+        console.log('Logged in!');
+      } else {
+        alert('Credenciales inválidas (usa admin@example.com / password para demo)');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Container component="main" maxWidth="xs">
-        <CssBaseline />
-        <Box
-          sx={{
-            marginTop: 8,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
+    <Container component="main" maxWidth="xs" sx={{ display: 'grid', placeItems: 'center', minHeight: '100dvh' }}>
+      <Paper sx={{ p: 4, width: '100%' }}>
+        <Stack alignItems="center" spacing={2} sx={{ mb: 2 }}>
+          <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
             <LockOutlinedIcon />
           </Avatar>
-          <Typography component="h1" variant="h5">
-            Iniciar sesión
-          </Typography>
-          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+          <Typography variant="h4">Iniciar sesión</Typography>
+          <Typography variant="body2" color="text.secondary">Bienvenido de nuevo, ingresa tus credenciales.</Typography>
+        </Stack>
+
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+          <Stack spacing={2}>
             <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Correo"
               name="email"
-              autoComplete="email"
-              autoFocus
-            />
-            <TextField
-              margin="normal"
-              required
+              label="Correo electrónico"
+              type="email"
               fullWidth
+              required
+              autoFocus
+              InputProps={{ startAdornment: (
+                <InputAdornment position="start"><MailOutlineIcon /></InputAdornment>
+              ) }}
+            />
+
+            <TextField
               name="password"
               label="Contraseña"
               type="password"
-              id="password"
-              autoComplete="current-password"
+              fullWidth
+              required
+              InputProps={{ startAdornment: (
+                <InputAdornment position="start"><KeyIcon /></InputAdornment>
+              ) }}
             />
-            <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-              Ingresar
-            </Button>
-          </Box>
-        </Box>
-      </Container>
-    </ThemeProvider>
-  );
-};
 
-export default LoginPage;
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <FormControlLabel control={<Checkbox defaultChecked />} label="Recordarme" />
+              <Link href="#" variant="body2">¿Olvidaste tu contraseña?</Link>
+            </Stack>
+
+            <Button type="submit" variant="contained" size="large" disabled={loading}>
+              {loading ? 'Ingresando…' : 'Ingresar'}
+            </Button>
+
+            <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
+              Demo: admin@example.com / password
+            </Typography>
+          </Stack>
+        </Box>
+      </Paper>
+    </Container>
+  );
+}

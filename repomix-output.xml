@@ -142,97 +142,263 @@ erp-frontend_1/src/modules/raffles/pages/TicketDetailPage.js
 erp-frontend_1/src/modules/raffles/pages/TicketDetailPage.module.css
 erp-frontend_1/src/routes/index.js
 erp-frontend_1/src/routes/ProtectedRoute.js
-erp-frontend/.git/COMMIT_EDITMSG
-erp-frontend/.git/config
-erp-frontend/.git/description
-erp-frontend/.git/HEAD
-erp-frontend/.git/hooks/applypatch-msg.sample
-erp-frontend/.git/hooks/commit-msg.sample
-erp-frontend/.git/hooks/fsmonitor-watchman.sample
-erp-frontend/.git/hooks/post-update.sample
-erp-frontend/.git/hooks/pre-applypatch.sample
-erp-frontend/.git/hooks/pre-commit.sample
-erp-frontend/.git/hooks/pre-merge-commit.sample
-erp-frontend/.git/hooks/pre-push.sample
-erp-frontend/.git/hooks/pre-rebase.sample
-erp-frontend/.git/hooks/pre-receive.sample
-erp-frontend/.git/hooks/prepare-commit-msg.sample
-erp-frontend/.git/hooks/push-to-checkout.sample
-erp-frontend/.git/hooks/sendemail-validate.sample
-erp-frontend/.git/hooks/update.sample
-erp-frontend/.git/info/exclude
-erp-frontend/.git/logs/HEAD
-erp-frontend/.git/logs/refs/heads/master
-erp-frontend/.git/refs/heads/master
+erp-frontend/.dockerignore
 erp-frontend/.gitignore
 erp-frontend/Dockerfile
-erp-frontend/nginx.conf
+erp-frontend/index.html
 erp-frontend/package.json
-erp-frontend/public/index.html
-erp-frontend/public/manifest.json
-erp-frontend/public/robots.txt
-erp-frontend/README.md
-erp-frontend/src/App.css
-erp-frontend/src/App.js
-erp-frontend/src/App.test.js
-erp-frontend/src/core/api/apiClient.js
-erp-frontend/src/index.css
-erp-frontend/src/index.js
-erp-frontend/src/logo.svg
-erp-frontend/src/modules/auth/pages/LoginPage.js
-erp-frontend/src/modules/auth/pages/LoginPage.module.css
-erp-frontend/src/reportWebVitals.js
-erp-frontend/src/routes/index.js
-erp-frontend/src/setupTests.js
+erp-frontend/src/App.jsx
+erp-frontend/src/core/components/layout/MainLayout.jsx
+erp-frontend/src/core/components/ui/KpiCard.jsx
+erp-frontend/src/core/components/ui/PageHeader.jsx
+erp-frontend/src/core/contexts/AuthContext.jsx
+erp-frontend/src/main.jsx
+erp-frontend/src/modules/admin/components/SubscriberTable.jsx
+erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx
+erp-frontend/src/modules/auth/pages/LoginPage.jsx
+erp-frontend/src/modules/dashboard/pages/Dashboard.jsx
+erp-frontend/src/routes/index.jsx
+erp-frontend/src/routes/ProtectedRoute.jsx
+erp-frontend/src/theme/index.js
+erp-frontend/src/theme/theme.js
+erp-frontend/vite.config.js
 </directory_structure>
 
 <files>
 This section contains the contents of the repository's files.
 
-<file path="docker-compose.yml">
-services:
-  db:
-    image: postgres:15-alpine
-    container_name: erp_db
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=1234
-      - POSTGRES_DB=erp
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+<file path="erp-frontend/src/core/components/ui/KpiCard.jsx">
+// =============================================
+// 3) src/core/components/ui/KpiCard.jsx
+// =============================================
+import * as React from 'react';
+import { Card, CardContent, Stack, Typography, Avatar, Chip } from '@mui/material';
 
-  backend:
-    container_name: erp_backend
-    build:
-      context: ./erp-backend
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/erp
-    volumes:
-      - ./erp-backend:/app
-    depends_on:
-      - db
+export default function KpiCard({ icon, label, value, diff, color = 'primary' }) {
+  const positive = typeof diff === 'number' && diff >= 0;
+  return (
+    <Card>
+      <CardContent>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+          <Stack spacing={0.5}>
+            <Typography variant="overline" color="text.secondary">{label}</Typography>
+            <Typography variant="h4">{value}</Typography>
+            {typeof diff === 'number' && (
+              <Chip size="small" label={`${positive ? '+' : ''}${diff}%`} color={positive ? 'success' : 'error'} sx={{ mt: 1, fontWeight: 600 }} />
+            )}
+          </Stack>
+          {icon ? (
+            <Avatar sx={{ bgcolor: (t) => t.palette[color].main, color: 'white', width: 48, height: 48 }}>
+              {icon}
+            </Avatar>
+          ) : null}
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+</file>
 
-  frontend:
-    container_name: erp_frontend
-    build:
-      context: ./erp-frontend
-      args:
-        - REACT_APP_API_BASE_URL=http://localhost:8000/api/v1
-    ports:
-      - "3000:3000" # <-- CAMBIO: Apuntamos al puerto del servidor de desarrollo
-    environment: # <-- AÑADIDO: Para asegurar el hot-reloading dentro de Docker
-      - WATCHPACK_POLLING=true
-    volumes:
-      - ./erp-frontend:/app
-      - /app/node_modules # <-- AÑADIDO: Evita que node_modules local sobreescriba el del contenedor
-    command: ["npm", "start"] # <-- AÑADIDO: Le dice al contenedor que ejecute 'npm start'
+<file path="erp-frontend/src/core/components/ui/PageHeader.jsx">
+// =============================================
+// 2) src/core/components/ui/PageHeader.jsx
+// =============================================
+import * as React from 'react';
+import { Stack, Typography, Breadcrumbs, Link, Box } from '@mui/material';
 
-volumes:
-  postgres_data:
+export default function PageHeader({ title, subtitle, breadcrumbs, actions }) {
+  return (
+    <Stack spacing={2} sx={{ mb: 3 }}>
+      {breadcrumbs?.length ? (
+        <Breadcrumbs separator="/">
+          {breadcrumbs.map((bc, i) => (
+            <Link key={i} color={i === breadcrumbs.length - 1 ? 'text.primary' : 'inherit'} underline={i === breadcrumbs.length - 1 ? 'none' : 'hover'} href={bc.href || '#'}>
+              {bc.label}
+            </Link>
+          ))}
+        </Breadcrumbs>
+      ) : null}
+
+      <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" gap={2}>
+        <Box>
+          <Typography variant="h3" gutterBottom>{title}</Typography>
+          {subtitle ? <Typography variant="subtitle1">{subtitle}</Typography> : null}
+        </Box>
+        {actions ? <Box>{actions}</Box> : null}
+      </Stack>
+    </Stack>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/dashboard/pages/Dashboard.jsx">
+// =============================================
+// 5) src/modules/dashboard/pages/Dashboard.jsx
+// =============================================
+import * as React from 'react';
+import { Container, Grid2 as Grid, Button, Stack, Paper } from '@mui/material';
+import InsightsIcon from '@mui/icons-material/Insights';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import KpiCard from '../../../core/components/ui/KpiCard';
+import { DataGrid } from '@mui/x-data-grid';
+import { LineChart } from '@mui/x-charts/LineChart';
+
+const rows = [
+  { id: 1, name: 'Luis Pérez', email: 'luis@acme.co', plan: 'Pro', status: 'Activo' },
+  { id: 2, name: 'María Rojas', email: 'maria@acme.co', plan: 'Free', status: 'Pendiente' },
+  { id: 3, name: 'Carlos Díaz', email: 'carlos@acme.co', plan: 'Pro', status: 'Suspendido' },
+  { id: 4, name: 'Ana Torres',  email: 'ana@acme.co',   plan: 'Enterprise', status: 'Activo' },
+];
+
+const columns = [
+  { field: 'name', headerName: 'Nombre', flex: 1, minWidth: 160 },
+  { field: 'email', headerName: 'Correo', flex: 1, minWidth: 200 },
+  { field: 'plan', headerName: 'Plan', width: 140 },
+  { field: 'status', headerName: 'Estado', width: 140 },
+];
+
+export default function Dashboard() {
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Resumen de métricas y actividad reciente"
+        breadcrumbs={[{ label: 'Inicio', href: '/' }, { label: 'Dashboard' }]}
+        actions={<Button variant="contained" startIcon={<InsightsIcon/>}>Nuevo reporte</Button>}
+      />
+
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <KpiCard label="Ingresos" value="$84,2M" diff={12} icon={<MonetizationOnIcon/>} color="success" />
+        </Grid>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <KpiCard label="Clientes" value="1.248" diff={4} icon={<PeopleAltIcon/>} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <KpiCard label="Órdenes" value="3.902" diff={-2} icon={<ReceiptLongIcon/>} color="secondary" />
+        </Grid>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <KpiCard label="ARPU" value="$67.3" diff={1.3} icon={<InsightsIcon/>} color="info" />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 7 }}>
+          <Paper sx={{ p: 2, height: 360 }}>
+            <LineChart
+              xAxis={[{ data: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul'] }]}
+              series={[{ data: [22, 28, 26, 32, 38, 36, 44], label: 'Ingresos' }]}
+              grid={{ horizontal: true }}
+              height={320}
+            />
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 5 }}>
+          <Paper sx={{ p: 2, height: 360 }}>
+            <DataGrid
+              rows={rows}
+              columns={columns}
+              disableRowSelectionOnClick
+              pageSizeOptions={[5]}
+              initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
+              sx={{ border: 'none', height: '100%' }}
+            />
+          </Paper>
+        </Grid>
+      </Grid>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/theme/index.js">
+// =============================================
+// 1) src/theme/index.js
+// =============================================
+export { default } from "./theme";
+</file>
+
+<file path="erp-frontend/src/theme/theme.js">
+// src/theme/theme.js
+import { createTheme } from '@mui/material/styles';
+
+// === TOKENS: change once, affect everywhere ===
+const tokens = {
+  palette: {
+    mode: 'light',
+    primary:   { main: '#0EA5E9', contrastText: '#FFFFFF' }, // brand color
+    secondary: { main: '#6366F1' },
+    success:   { main: '#10B981' },
+    warning:   { main: '#F59E0B' },
+    error:     { main: '#EF4444' },
+    info:      { main: '#06B6D4' },
+    background:{ default: '#F8FAFC', paper: '#FFFFFF' },
+    text:      { primary: '#0F172A', secondary: '#475569' },
+  },
+  typography: {
+    fontFamily: `'InterVariable', 'Inter var', Inter, Roboto, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif`,
+    h1: { fontSize: 36, fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 },
+    h2: { fontSize: 30, fontWeight: 700, letterSpacing: -0.2, lineHeight: 1.25 },
+    h3: { fontSize: 24, fontWeight: 700, lineHeight: 1.3 },
+    h4: { fontSize: 20, fontWeight: 700, lineHeight: 1.35 },
+    h5: { fontSize: 18, fontWeight: 600 },
+    h6: { fontSize: 16, fontWeight: 600 },
+    subtitle1: { fontSize: 15, lineHeight: 1.5, color: '#334155' },
+    body1:     { fontSize: 14, lineHeight: 1.6 },
+    body2:     { fontSize: 13, lineHeight: 1.6, color: '#475569' },
+    button:    { textTransform: 'none', fontWeight: 600, letterSpacing: 0 },
+    caption:   { fontSize: 12, color: '#64748B' },
+    overline:  { fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' },
+  },
+  shape: { borderRadius: 14 },
+  spacing: 8,
+};
+
+const theme = createTheme({
+  ...tokens,
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        html: { scrollBehavior: 'smooth' },
+        body: { backgroundColor: tokens.palette.background.default },
+        '*::-webkit-scrollbar': { width: 10, height: 10 },
+        '*::-webkit-scrollbar-thumb': { background: '#CBD5E1', borderRadius: 8 },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: { borderBottom: '1px solid #E2E8F0', backgroundImage: 'none' },
+      },
+    },
+    MuiToolbar: { styleOverrides: { root: { minHeight: 64 } } },
+    MuiPaper: {
+      defaultProps: { elevation: 0 },
+      styleOverrides: {
+        root: { borderRadius: tokens.shape.borderRadius, border: '1px solid #E2E8F0' },
+      },
+    },
+    MuiCard: {
+      defaultProps: { elevation: 0 },
+      styleOverrides: { root: { borderRadius: tokens.shape.borderRadius, overflow: 'hidden' } },
+    },
+    MuiButton: {
+      defaultProps: { disableElevation: true },
+      styleOverrides: {
+        root: { borderRadius: 999, paddingInline: 16 },
+        containedPrimary: { color: tokens.palette.primary.contrastText },
+      },
+    },
+    MuiTextField: { defaultProps: { variant: 'outlined', size: 'medium' } },
+    MuiTableHead: {
+      styleOverrides: { root: { '& th': { fontWeight: 700, background: '#F1F5F9' } } },
+    },
+    MuiChip: { styleOverrides: { root: { fontWeight: 600 } } },
+  },
+});
+
+export default theme;
 </file>
 
 <file path="erp-backend/.dockerignore">
@@ -10500,1029 +10666,53 @@ const ProtectedRoute = ({ children }) => {
 export default ProtectedRoute;
 </file>
 
-<file path="erp-frontend/.git/COMMIT_EDITMSG">
-Initialize project using Create React App
-</file>
-
-<file path="erp-frontend/.git/config">
-[core]
-	repositoryformatversion = 0
-	filemode = false
-	bare = false
-	logallrefupdates = true
-	symlinks = false
-	ignorecase = true
-</file>
-
-<file path="erp-frontend/.git/description">
-Unnamed repository; edit this file 'description' to name the repository.
-</file>
-
-<file path="erp-frontend/.git/HEAD">
-ref: refs/heads/master
-</file>
-
-<file path="erp-frontend/.git/hooks/applypatch-msg.sample">
-#!/bin/sh
-#
-# An example hook script to check the commit log message taken by
-# applypatch from an e-mail message.
-#
-# The hook should exit with non-zero status after issuing an
-# appropriate message if it wants to stop the commit.  The hook is
-# allowed to edit the commit message file.
-#
-# To enable this hook, rename this file to "applypatch-msg".
-
-. git-sh-setup
-commitmsg="$(git rev-parse --git-path hooks/commit-msg)"
-test -x "$commitmsg" && exec "$commitmsg" ${1+"$@"}
-:
-</file>
-
-<file path="erp-frontend/.git/hooks/commit-msg.sample">
-#!/bin/sh
-#
-# An example hook script to check the commit log message.
-# Called by "git commit" with one argument, the name of the file
-# that has the commit message.  The hook should exit with non-zero
-# status after issuing an appropriate message if it wants to stop the
-# commit.  The hook is allowed to edit the commit message file.
-#
-# To enable this hook, rename this file to "commit-msg".
-
-# Uncomment the below to add a Signed-off-by line to the message.
-# Doing this in a hook is a bad idea in general, but the prepare-commit-msg
-# hook is more suited to it.
-#
-# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
-# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
-
-# This example catches duplicate Signed-off-by lines.
-
-test "" = "$(grep '^Signed-off-by: ' "$1" |
-	 sort | uniq -c | sed -e '/^[ 	]*1[ 	]/d')" || {
-	echo >&2 Duplicate Signed-off-by lines.
-	exit 1
-}
-</file>
-
-<file path="erp-frontend/.git/hooks/fsmonitor-watchman.sample">
-#!/usr/bin/perl
-
-use strict;
-use warnings;
-use IPC::Open2;
-
-# An example hook script to integrate Watchman
-# (https://facebook.github.io/watchman/) with git to speed up detecting
-# new and modified files.
-#
-# The hook is passed a version (currently 2) and last update token
-# formatted as a string and outputs to stdout a new update token and
-# all files that have been modified since the update token. Paths must
-# be relative to the root of the working tree and separated by a single NUL.
-#
-# To enable this hook, rename this file to "query-watchman" and set
-# 'git config core.fsmonitor .git/hooks/query-watchman'
-#
-my ($version, $last_update_token) = @ARGV;
-
-# Uncomment for debugging
-# print STDERR "$0 $version $last_update_token\n";
-
-# Check the hook interface version
-if ($version ne 2) {
-	die "Unsupported query-fsmonitor hook version '$version'.\n" .
-	    "Falling back to scanning...\n";
-}
-
-my $git_work_tree = get_working_dir();
-
-my $retry = 1;
-
-my $json_pkg;
-eval {
-	require JSON::XS;
-	$json_pkg = "JSON::XS";
-	1;
-} or do {
-	require JSON::PP;
-	$json_pkg = "JSON::PP";
-};
-
-launch_watchman();
-
-sub launch_watchman {
-	my $o = watchman_query();
-	if (is_work_tree_watched($o)) {
-		output_result($o->{clock}, @{$o->{files}});
-	}
-}
-
-sub output_result {
-	my ($clockid, @files) = @_;
-
-	# Uncomment for debugging watchman output
-	# open (my $fh, ">", ".git/watchman-output.out");
-	# binmode $fh, ":utf8";
-	# print $fh "$clockid\n@files\n";
-	# close $fh;
-
-	binmode STDOUT, ":utf8";
-	print $clockid;
-	print "\0";
-	local $, = "\0";
-	print @files;
-}
-
-sub watchman_clock {
-	my $response = qx/watchman clock "$git_work_tree"/;
-	die "Failed to get clock id on '$git_work_tree'.\n" .
-		"Falling back to scanning...\n" if $? != 0;
-
-	return $json_pkg->new->utf8->decode($response);
-}
-
-sub watchman_query {
-	my $pid = open2(\*CHLD_OUT, \*CHLD_IN, 'watchman -j --no-pretty')
-	or die "open2() failed: $!\n" .
-	"Falling back to scanning...\n";
-
-	# In the query expression below we're asking for names of files that
-	# changed since $last_update_token but not from the .git folder.
-	#
-	# To accomplish this, we're using the "since" generator to use the
-	# recency index to select candidate nodes and "fields" to limit the
-	# output to file names only. Then we're using the "expression" term to
-	# further constrain the results.
-	my $last_update_line = "";
-	if (substr($last_update_token, 0, 1) eq "c") {
-		$last_update_token = "\"$last_update_token\"";
-		$last_update_line = qq[\n"since": $last_update_token,];
-	}
-	my $query = <<"	END";
-		["query", "$git_work_tree", {$last_update_line
-			"fields": ["name"],
-			"expression": ["not", ["dirname", ".git"]]
-		}]
-	END
-
-	# Uncomment for debugging the watchman query
-	# open (my $fh, ">", ".git/watchman-query.json");
-	# print $fh $query;
-	# close $fh;
-
-	print CHLD_IN $query;
-	close CHLD_IN;
-	my $response = do {local $/; <CHLD_OUT>};
-
-	# Uncomment for debugging the watch response
-	# open ($fh, ">", ".git/watchman-response.json");
-	# print $fh $response;
-	# close $fh;
-
-	die "Watchman: command returned no output.\n" .
-	"Falling back to scanning...\n" if $response eq "";
-	die "Watchman: command returned invalid output: $response\n" .
-	"Falling back to scanning...\n" unless $response =~ /^\{/;
-
-	return $json_pkg->new->utf8->decode($response);
-}
-
-sub is_work_tree_watched {
-	my ($output) = @_;
-	my $error = $output->{error};
-	if ($retry > 0 and $error and $error =~ m/unable to resolve root .* directory (.*) is not watched/) {
-		$retry--;
-		my $response = qx/watchman watch "$git_work_tree"/;
-		die "Failed to make watchman watch '$git_work_tree'.\n" .
-		    "Falling back to scanning...\n" if $? != 0;
-		$output = $json_pkg->new->utf8->decode($response);
-		$error = $output->{error};
-		die "Watchman: $error.\n" .
-		"Falling back to scanning...\n" if $error;
-
-		# Uncomment for debugging watchman output
-		# open (my $fh, ">", ".git/watchman-output.out");
-		# close $fh;
-
-		# Watchman will always return all files on the first query so
-		# return the fast "everything is dirty" flag to git and do the
-		# Watchman query just to get it over with now so we won't pay
-		# the cost in git to look up each individual file.
-		my $o = watchman_clock();
-		$error = $output->{error};
-
-		die "Watchman: $error.\n" .
-		"Falling back to scanning...\n" if $error;
-
-		output_result($o->{clock}, ("/"));
-		$last_update_token = $o->{clock};
-
-		eval { launch_watchman() };
-		return 0;
-	}
-
-	die "Watchman: $error.\n" .
-	"Falling back to scanning...\n" if $error;
-
-	return 1;
-}
-
-sub get_working_dir {
-	my $working_dir;
-	if ($^O =~ 'msys' || $^O =~ 'cygwin') {
-		$working_dir = Win32::GetCwd();
-		$working_dir =~ tr/\\/\//;
-	} else {
-		require Cwd;
-		$working_dir = Cwd::cwd();
-	}
-
-	return $working_dir;
-}
-</file>
-
-<file path="erp-frontend/.git/hooks/post-update.sample">
-#!/bin/sh
-#
-# An example hook script to prepare a packed repository for use over
-# dumb transports.
-#
-# To enable this hook, rename this file to "post-update".
-
-exec git update-server-info
-</file>
-
-<file path="erp-frontend/.git/hooks/pre-applypatch.sample">
-#!/bin/sh
-#
-# An example hook script to verify what is about to be committed
-# by applypatch from an e-mail message.
-#
-# The hook should exit with non-zero status after issuing an
-# appropriate message if it wants to stop the commit.
-#
-# To enable this hook, rename this file to "pre-applypatch".
-
-. git-sh-setup
-precommit="$(git rev-parse --git-path hooks/pre-commit)"
-test -x "$precommit" && exec "$precommit" ${1+"$@"}
-:
-</file>
-
-<file path="erp-frontend/.git/hooks/pre-commit.sample">
-#!/bin/sh
-#
-# An example hook script to verify what is about to be committed.
-# Called by "git commit" with no arguments.  The hook should
-# exit with non-zero status after issuing an appropriate message if
-# it wants to stop the commit.
-#
-# To enable this hook, rename this file to "pre-commit".
-
-if git rev-parse --verify HEAD >/dev/null 2>&1
-then
-	against=HEAD
-else
-	# Initial commit: diff against an empty tree object
-	against=$(git hash-object -t tree /dev/null)
-fi
-
-# If you want to allow non-ASCII filenames set this variable to true.
-allownonascii=$(git config --type=bool hooks.allownonascii)
-
-# Redirect output to stderr.
-exec 1>&2
-
-# Cross platform projects tend to avoid non-ASCII filenames; prevent
-# them from being added to the repository. We exploit the fact that the
-# printable range starts at the space character and ends with tilde.
-if [ "$allownonascii" != "true" ] &&
-	# Note that the use of brackets around a tr range is ok here, (it's
-	# even required, for portability to Solaris 10's /usr/bin/tr), since
-	# the square bracket bytes happen to fall in the designated range.
-	test $(git diff-index --cached --name-only --diff-filter=A -z $against |
-	  LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
-then
-	cat <<\EOF
-Error: Attempt to add a non-ASCII file name.
-
-This can cause problems if you want to work with people on other platforms.
-
-To be portable it is advisable to rename the file.
-
-If you know what you are doing you can disable this check using:
-
-  git config hooks.allownonascii true
-EOF
-	exit 1
-fi
-
-# If there are whitespace errors, print the offending file names and fail.
-exec git diff-index --check --cached $against --
-</file>
-
-<file path="erp-frontend/.git/hooks/pre-merge-commit.sample">
-#!/bin/sh
-#
-# An example hook script to verify what is about to be committed.
-# Called by "git merge" with no arguments.  The hook should
-# exit with non-zero status after issuing an appropriate message to
-# stderr if it wants to stop the merge commit.
-#
-# To enable this hook, rename this file to "pre-merge-commit".
-
-. git-sh-setup
-test -x "$GIT_DIR/hooks/pre-commit" &&
-        exec "$GIT_DIR/hooks/pre-commit"
-:
-</file>
-
-<file path="erp-frontend/.git/hooks/pre-push.sample">
-#!/bin/sh
-
-# An example hook script to verify what is about to be pushed.  Called by "git
-# push" after it has checked the remote status, but before anything has been
-# pushed.  If this script exits with a non-zero status nothing will be pushed.
-#
-# This hook is called with the following parameters:
-#
-# $1 -- Name of the remote to which the push is being done
-# $2 -- URL to which the push is being done
-#
-# If pushing without using a named remote those arguments will be equal.
-#
-# Information about the commits which are being pushed is supplied as lines to
-# the standard input in the form:
-#
-#   <local ref> <local oid> <remote ref> <remote oid>
-#
-# This sample shows how to prevent push of commits where the log message starts
-# with "WIP" (work in progress).
-
-remote="$1"
-url="$2"
-
-zero=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
-
-while read local_ref local_oid remote_ref remote_oid
-do
-	if test "$local_oid" = "$zero"
-	then
-		# Handle delete
-		:
-	else
-		if test "$remote_oid" = "$zero"
-		then
-			# New branch, examine all commits
-			range="$local_oid"
-		else
-			# Update to existing branch, examine new commits
-			range="$remote_oid..$local_oid"
-		fi
-
-		# Check for WIP commit
-		commit=$(git rev-list -n 1 --grep '^WIP' "$range")
-		if test -n "$commit"
-		then
-			echo >&2 "Found WIP commit in $local_ref, not pushing"
-			exit 1
-		fi
-	fi
-done
-
-exit 0
-</file>
-
-<file path="erp-frontend/.git/hooks/pre-rebase.sample">
-#!/bin/sh
-#
-# Copyright (c) 2006, 2008 Junio C Hamano
-#
-# The "pre-rebase" hook is run just before "git rebase" starts doing
-# its job, and can prevent the command from running by exiting with
-# non-zero status.
-#
-# The hook is called with the following parameters:
-#
-# $1 -- the upstream the series was forked from.
-# $2 -- the branch being rebased (or empty when rebasing the current branch).
-#
-# This sample shows how to prevent topic branches that are already
-# merged to 'next' branch from getting rebased, because allowing it
-# would result in rebasing already published history.
-
-publish=next
-basebranch="$1"
-if test "$#" = 2
-then
-	topic="refs/heads/$2"
-else
-	topic=`git symbolic-ref HEAD` ||
-	exit 0 ;# we do not interrupt rebasing detached HEAD
-fi
-
-case "$topic" in
-refs/heads/??/*)
-	;;
-*)
-	exit 0 ;# we do not interrupt others.
-	;;
-esac
-
-# Now we are dealing with a topic branch being rebased
-# on top of master.  Is it OK to rebase it?
-
-# Does the topic really exist?
-git show-ref -q "$topic" || {
-	echo >&2 "No such branch $topic"
-	exit 1
-}
-
-# Is topic fully merged to master?
-not_in_master=`git rev-list --pretty=oneline ^master "$topic"`
-if test -z "$not_in_master"
-then
-	echo >&2 "$topic is fully merged to master; better remove it."
-	exit 1 ;# we could allow it, but there is no point.
-fi
-
-# Is topic ever merged to next?  If so you should not be rebasing it.
-only_next_1=`git rev-list ^master "^$topic" ${publish} | sort`
-only_next_2=`git rev-list ^master           ${publish} | sort`
-if test "$only_next_1" = "$only_next_2"
-then
-	not_in_topic=`git rev-list "^$topic" master`
-	if test -z "$not_in_topic"
-	then
-		echo >&2 "$topic is already up to date with master"
-		exit 1 ;# we could allow it, but there is no point.
-	else
-		exit 0
-	fi
-else
-	not_in_next=`git rev-list --pretty=oneline ^${publish} "$topic"`
-	/usr/bin/perl -e '
-		my $topic = $ARGV[0];
-		my $msg = "* $topic has commits already merged to public branch:\n";
-		my (%not_in_next) = map {
-			/^([0-9a-f]+) /;
-			($1 => 1);
-		} split(/\n/, $ARGV[1]);
-		for my $elem (map {
-				/^([0-9a-f]+) (.*)$/;
-				[$1 => $2];
-			} split(/\n/, $ARGV[2])) {
-			if (!exists $not_in_next{$elem->[0]}) {
-				if ($msg) {
-					print STDERR $msg;
-					undef $msg;
-				}
-				print STDERR " $elem->[1]\n";
-			}
-		}
-	' "$topic" "$not_in_next" "$not_in_master"
-	exit 1
-fi
-
-<<\DOC_END
-
-This sample hook safeguards topic branches that have been
-published from being rewound.
-
-The workflow assumed here is:
-
- * Once a topic branch forks from "master", "master" is never
-   merged into it again (either directly or indirectly).
-
- * Once a topic branch is fully cooked and merged into "master",
-   it is deleted.  If you need to build on top of it to correct
-   earlier mistakes, a new topic branch is created by forking at
-   the tip of the "master".  This is not strictly necessary, but
-   it makes it easier to keep your history simple.
-
- * Whenever you need to test or publish your changes to topic
-   branches, merge them into "next" branch.
-
-The script, being an example, hardcodes the publish branch name
-to be "next", but it is trivial to make it configurable via
-$GIT_DIR/config mechanism.
-
-With this workflow, you would want to know:
-
-(1) ... if a topic branch has ever been merged to "next".  Young
-    topic branches can have stupid mistakes you would rather
-    clean up before publishing, and things that have not been
-    merged into other branches can be easily rebased without
-    affecting other people.  But once it is published, you would
-    not want to rewind it.
-
-(2) ... if a topic branch has been fully merged to "master".
-    Then you can delete it.  More importantly, you should not
-    build on top of it -- other people may already want to
-    change things related to the topic as patches against your
-    "master", so if you need further changes, it is better to
-    fork the topic (perhaps with the same name) afresh from the
-    tip of "master".
-
-Let's look at this example:
-
-		   o---o---o---o---o---o---o---o---o---o "next"
-		  /       /           /           /
-		 /   a---a---b A     /           /
-		/   /               /           /
-	       /   /   c---c---c---c B         /
-	      /   /   /             \         /
-	     /   /   /   b---b C     \       /
-	    /   /   /   /             \     /
-    ---o---o---o---o---o---o---o---o---o---o---o "master"
-
-
-A, B and C are topic branches.
-
- * A has one fix since it was merged up to "next".
-
- * B has finished.  It has been fully merged up to "master" and "next",
-   and is ready to be deleted.
-
- * C has not merged to "next" at all.
-
-We would want to allow C to be rebased, refuse A, and encourage
-B to be deleted.
-
-To compute (1):
-
-	git rev-list ^master ^topic next
-	git rev-list ^master        next
-
-	if these match, topic has not merged in next at all.
-
-To compute (2):
-
-	git rev-list master..topic
-
-	if this is empty, it is fully merged to "master".
-
-DOC_END
-</file>
-
-<file path="erp-frontend/.git/hooks/pre-receive.sample">
-#!/bin/sh
-#
-# An example hook script to make use of push options.
-# The example simply echoes all push options that start with 'echoback='
-# and rejects all pushes when the "reject" push option is used.
-#
-# To enable this hook, rename this file to "pre-receive".
-
-if test -n "$GIT_PUSH_OPTION_COUNT"
-then
-	i=0
-	while test "$i" -lt "$GIT_PUSH_OPTION_COUNT"
-	do
-		eval "value=\$GIT_PUSH_OPTION_$i"
-		case "$value" in
-		echoback=*)
-			echo "echo from the pre-receive-hook: ${value#*=}" >&2
-			;;
-		reject)
-			exit 1
-		esac
-		i=$((i + 1))
-	done
-fi
-</file>
-
-<file path="erp-frontend/.git/hooks/prepare-commit-msg.sample">
-#!/bin/sh
-#
-# An example hook script to prepare the commit log message.
-# Called by "git commit" with the name of the file that has the
-# commit message, followed by the description of the commit
-# message's source.  The hook's purpose is to edit the commit
-# message file.  If the hook fails with a non-zero status,
-# the commit is aborted.
-#
-# To enable this hook, rename this file to "prepare-commit-msg".
-
-# This hook includes three examples. The first one removes the
-# "# Please enter the commit message..." help message.
-#
-# The second includes the output of "git diff --name-status -r"
-# into the message, just before the "git status" output.  It is
-# commented because it doesn't cope with --amend or with squashed
-# commits.
-#
-# The third example adds a Signed-off-by line to the message, that can
-# still be edited.  This is rarely a good idea.
-
-COMMIT_MSG_FILE=$1
-COMMIT_SOURCE=$2
-SHA1=$3
-
-/usr/bin/perl -i.bak -ne 'print unless(m/^. Please enter the commit message/..m/^#$/)' "$COMMIT_MSG_FILE"
-
-# case "$COMMIT_SOURCE,$SHA1" in
-#  ,|template,)
-#    /usr/bin/perl -i.bak -pe '
-#       print "\n" . `git diff --cached --name-status -r`
-# 	 if /^#/ && $first++ == 0' "$COMMIT_MSG_FILE" ;;
-#  *) ;;
-# esac
-
-# SOB=$(git var GIT_COMMITTER_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
-# git interpret-trailers --in-place --trailer "$SOB" "$COMMIT_MSG_FILE"
-# if test -z "$COMMIT_SOURCE"
-# then
-#   /usr/bin/perl -i.bak -pe 'print "\n" if !$first_line++' "$COMMIT_MSG_FILE"
-# fi
-</file>
-
-<file path="erp-frontend/.git/hooks/push-to-checkout.sample">
-#!/bin/sh
-
-# An example hook script to update a checked-out tree on a git push.
-#
-# This hook is invoked by git-receive-pack(1) when it reacts to git
-# push and updates reference(s) in its repository, and when the push
-# tries to update the branch that is currently checked out and the
-# receive.denyCurrentBranch configuration variable is set to
-# updateInstead.
-#
-# By default, such a push is refused if the working tree and the index
-# of the remote repository has any difference from the currently
-# checked out commit; when both the working tree and the index match
-# the current commit, they are updated to match the newly pushed tip
-# of the branch. This hook is to be used to override the default
-# behaviour; however the code below reimplements the default behaviour
-# as a starting point for convenient modification.
-#
-# The hook receives the commit with which the tip of the current
-# branch is going to be updated:
-commit=$1
-
-# It can exit with a non-zero status to refuse the push (when it does
-# so, it must not modify the index or the working tree).
-die () {
-	echo >&2 "$*"
-	exit 1
-}
-
-# Or it can make any necessary changes to the working tree and to the
-# index to bring them to the desired state when the tip of the current
-# branch is updated to the new commit, and exit with a zero status.
-#
-# For example, the hook can simply run git read-tree -u -m HEAD "$1"
-# in order to emulate git fetch that is run in the reverse direction
-# with git push, as the two-tree form of git read-tree -u -m is
-# essentially the same as git switch or git checkout that switches
-# branches while keeping the local changes in the working tree that do
-# not interfere with the difference between the branches.
-
-# The below is a more-or-less exact translation to shell of the C code
-# for the default behaviour for git's push-to-checkout hook defined in
-# the push_to_deploy() function in builtin/receive-pack.c.
-#
-# Note that the hook will be executed from the repository directory,
-# not from the working tree, so if you want to perform operations on
-# the working tree, you will have to adapt your code accordingly, e.g.
-# by adding "cd .." or using relative paths.
-
-if ! git update-index -q --ignore-submodules --refresh
-then
-	die "Up-to-date check failed"
-fi
-
-if ! git diff-files --quiet --ignore-submodules --
-then
-	die "Working directory has unstaged changes"
-fi
-
-# This is a rough translation of:
-#
-#   head_has_history() ? "HEAD" : EMPTY_TREE_SHA1_HEX
-if git cat-file -e HEAD 2>/dev/null
-then
-	head=HEAD
-else
-	head=$(git hash-object -t tree --stdin </dev/null)
-fi
-
-if ! git diff-index --quiet --cached --ignore-submodules $head --
-then
-	die "Working directory has staged changes"
-fi
-
-if ! git read-tree -u -m "$commit"
-then
-	die "Could not update working tree to new HEAD"
-fi
-</file>
-
-<file path="erp-frontend/.git/hooks/sendemail-validate.sample">
-#!/bin/sh
-
-# An example hook script to validate a patch (and/or patch series) before
-# sending it via email.
-#
-# The hook should exit with non-zero status after issuing an appropriate
-# message if it wants to prevent the email(s) from being sent.
-#
-# To enable this hook, rename this file to "sendemail-validate".
-#
-# By default, it will only check that the patch(es) can be applied on top of
-# the default upstream branch without conflicts in a secondary worktree. After
-# validation (successful or not) of the last patch of a series, the worktree
-# will be deleted.
-#
-# The following config variables can be set to change the default remote and
-# remote ref that are used to apply the patches against:
-#
-#   sendemail.validateRemote (default: origin)
-#   sendemail.validateRemoteRef (default: HEAD)
-#
-# Replace the TODO placeholders with appropriate checks according to your
-# needs.
-
-validate_cover_letter () {
-	file="$1"
-	# TODO: Replace with appropriate checks (e.g. spell checking).
-	true
-}
-
-validate_patch () {
-	file="$1"
-	# Ensure that the patch applies without conflicts.
-	git am -3 "$file" || return
-	# TODO: Replace with appropriate checks for this patch
-	# (e.g. checkpatch.pl).
-	true
-}
-
-validate_series () {
-	# TODO: Replace with appropriate checks for the whole series
-	# (e.g. quick build, coding style checks, etc.).
-	true
-}
-
-# main -------------------------------------------------------------------------
-
-if test "$GIT_SENDEMAIL_FILE_COUNTER" = 1
-then
-	remote=$(git config --default origin --get sendemail.validateRemote) &&
-	ref=$(git config --default HEAD --get sendemail.validateRemoteRef) &&
-	worktree=$(mktemp --tmpdir -d sendemail-validate.XXXXXXX) &&
-	git worktree add -fd --checkout "$worktree" "refs/remotes/$remote/$ref" &&
-	git config --replace-all sendemail.validateWorktree "$worktree"
-else
-	worktree=$(git config --get sendemail.validateWorktree)
-fi || {
-	echo "sendemail-validate: error: failed to prepare worktree" >&2
-	exit 1
-}
-
-unset GIT_DIR GIT_WORK_TREE
-cd "$worktree" &&
-
-if grep -q "^diff --git " "$1"
-then
-	validate_patch "$1"
-else
-	validate_cover_letter "$1"
-fi &&
-
-if test "$GIT_SENDEMAIL_FILE_COUNTER" = "$GIT_SENDEMAIL_FILE_TOTAL"
-then
-	git config --unset-all sendemail.validateWorktree &&
-	trap 'git worktree remove -ff "$worktree"' EXIT &&
-	validate_series
-fi
-</file>
-
-<file path="erp-frontend/.git/hooks/update.sample">
-#!/bin/sh
-#
-# An example hook script to block unannotated tags from entering.
-# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
-#
-# To enable this hook, rename this file to "update".
-#
-# Config
-# ------
-# hooks.allowunannotated
-#   This boolean sets whether unannotated tags will be allowed into the
-#   repository.  By default they won't be.
-# hooks.allowdeletetag
-#   This boolean sets whether deleting tags will be allowed in the
-#   repository.  By default they won't be.
-# hooks.allowmodifytag
-#   This boolean sets whether a tag may be modified after creation. By default
-#   it won't be.
-# hooks.allowdeletebranch
-#   This boolean sets whether deleting branches will be allowed in the
-#   repository.  By default they won't be.
-# hooks.denycreatebranch
-#   This boolean sets whether remotely creating branches will be denied
-#   in the repository.  By default this is allowed.
-#
-
-# --- Command line
-refname="$1"
-oldrev="$2"
-newrev="$3"
-
-# --- Safety check
-if [ -z "$GIT_DIR" ]; then
-	echo "Don't run this script from the command line." >&2
-	echo " (if you want, you could supply GIT_DIR then run" >&2
-	echo "  $0 <ref> <oldrev> <newrev>)" >&2
-	exit 1
-fi
-
-if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
-	echo "usage: $0 <ref> <oldrev> <newrev>" >&2
-	exit 1
-fi
-
-# --- Config
-allowunannotated=$(git config --type=bool hooks.allowunannotated)
-allowdeletebranch=$(git config --type=bool hooks.allowdeletebranch)
-denycreatebranch=$(git config --type=bool hooks.denycreatebranch)
-allowdeletetag=$(git config --type=bool hooks.allowdeletetag)
-allowmodifytag=$(git config --type=bool hooks.allowmodifytag)
-
-# check for no description
-projectdesc=$(sed -e '1q' "$GIT_DIR/description")
-case "$projectdesc" in
-"Unnamed repository"* | "")
-	echo "*** Project description file hasn't been set" >&2
-	exit 1
-	;;
-esac
-
-# --- Check types
-# if $newrev is 0000...0000, it's a commit to delete a ref.
-zero=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
-if [ "$newrev" = "$zero" ]; then
-	newrev_type=delete
-else
-	newrev_type=$(git cat-file -t $newrev)
-fi
-
-case "$refname","$newrev_type" in
-	refs/tags/*,commit)
-		# un-annotated tag
-		short_refname=${refname##refs/tags/}
-		if [ "$allowunannotated" != "true" ]; then
-			echo "*** The un-annotated tag, $short_refname, is not allowed in this repository" >&2
-			echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
-			exit 1
-		fi
-		;;
-	refs/tags/*,delete)
-		# delete tag
-		if [ "$allowdeletetag" != "true" ]; then
-			echo "*** Deleting a tag is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/tags/*,tag)
-		# annotated tag
-		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
-		then
-			echo "*** Tag '$refname' already exists." >&2
-			echo "*** Modifying a tag is not allowed in this repository." >&2
-			exit 1
-		fi
-		;;
-	refs/heads/*,commit)
-		# branch
-		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
-			echo "*** Creating a branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/heads/*,delete)
-		# delete branch
-		if [ "$allowdeletebranch" != "true" ]; then
-			echo "*** Deleting a branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	refs/remotes/*,commit)
-		# tracking branch
-		;;
-	refs/remotes/*,delete)
-		# delete tracking branch
-		if [ "$allowdeletebranch" != "true" ]; then
-			echo "*** Deleting a tracking branch is not allowed in this repository" >&2
-			exit 1
-		fi
-		;;
-	*)
-		# Anything else (is there anything else?)
-		echo "*** Update hook: unknown type of update to ref $refname of type $newrev_type" >&2
-		exit 1
-		;;
-esac
-
-# --- Finished
-exit 0
-</file>
-
-<file path="erp-frontend/.git/info/exclude">
-# git ls-files --others --exclude-from=.git/info/exclude
-# Lines that start with '#' are comments.
-# For a project mostly in C, the following would be a good set of
-# exclude patterns (uncomment them if you want to use them):
-# *.[oa]
-# *~
-</file>
-
-<file path="erp-frontend/.git/logs/HEAD">
-0000000000000000000000000000000000000000 372f2e5e058109d94a4e2f2c320ee9c77bc71a7c César Arango <ceau.0612@gmail.com> 1754531195 -0500	commit (initial): Initialize project using Create React App
-</file>
-
-<file path="erp-frontend/.git/logs/refs/heads/master">
-0000000000000000000000000000000000000000 372f2e5e058109d94a4e2f2c320ee9c77bc71a7c César Arango <ceau.0612@gmail.com> 1754531195 -0500	commit (initial): Initialize project using Create React App
-</file>
-
-<file path="erp-frontend/.git/refs/heads/master">
-372f2e5e058109d94a4e2f2c320ee9c77bc71a7c
+<file path="erp-frontend/.dockerignore">
+node_modules
+npm-debug.log
+.env
+.git
+
+# build output
+build
+dist
 </file>
 
 <file path="erp-frontend/.gitignore">
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# production
-/build
-
-# misc
-.DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+node_modules/
+dist/
 </file>
 
 <file path="erp-frontend/Dockerfile">
-# erp-frontend/Dockerfile (VERSIÓN DE DESARROLLO)
-
-# Usamos la imagen de Node.js como base, que SÍ incluye npm.
+# Development Dockerfile for React frontend (Vite)
 FROM node:18-alpine
 
-# Establecemos el directorio de trabajo dentro del contenedor.
 WORKDIR /app
 
-# Copiamos los archivos de dependencias.
-COPY package.json ./
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
-# Instalamos las dependencias. Usamos 'npm install' en lugar de 'ci'
-# para mayor flexibilidad en desarrollo.
+COPY package.json package-lock.json* ./
 RUN npm install
 
-# Copiamos el resto del código fuente.
 COPY . .
 
-# Exponemos el puerto 3000, donde corre el servidor de desarrollo de React.
 EXPOSE 3000
-
-# El comando por defecto será 'npm start'.
 CMD ["npm", "start"]
 </file>
 
-<file path="erp-frontend/nginx.conf">
-# erp-frontend/nginx.conf
-
-server {
-    listen 80;
-    server_name localhost;
-
-    # Raíz de los archivos estáticos
-    root /usr/share/nginx/html;
-    index index.html index.htm;
-
-    # Regla principal para SPA
-    location / {
-        # Intenta servir el archivo solicitado, luego un directorio, 
-        # y si falla, devuelve /index.html para que React Router maneje la ruta.
-        try_files $uri $uri/ /index.html;
-    }
-}
+<file path="erp-frontend/index.html">
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ERP Frontend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
 </file>
 
 <file path="erp-frontend/package.json">
@@ -11530,517 +10720,498 @@ server {
   "name": "erp-frontend",
   "version": "0.1.0",
   "private": true,
-  "dependencies": {
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.6.4",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^13.5.0",
-    "axios": "^1.11.0",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "react-router-dom": "^7.7.1",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
-  },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "dev": "vite",
+    "start": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo \"No tests configured\" && exit 0"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@fontsource-variable/inter": "^5.2.6",
+    "@mui/icons-material": "^5.18.0",
+    "@mui/material": "^5.18.0",
+    "@mui/x-charts": "^8.10.0",
+    "@mui/x-data-grid": "^8.10.0",
+    "final-form": "^4.20.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-final-form": "^6.5.9",
+    "react-router-dom": "^6.22.0"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^5.0.0"
   }
 }
 </file>
 
-<file path="erp-frontend/public/index.html">
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
-</html>
-</file>
-
-<file path="erp-frontend/public/manifest.json">
-{
-  "short_name": "React App",
-  "name": "Create React App Sample",
-  "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
-}
-</file>
-
-<file path="erp-frontend/public/robots.txt">
-# https://www.robotstxt.org/robotstxt.html
-User-agent: *
-Disallow:
-</file>
-
-<file path="erp-frontend/README.md">
-# Getting Started with Create React App
-
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-</file>
-
-<file path="erp-frontend/src/App.css">
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-</file>
-
-<file path="erp-frontend/src/App.js">
+<file path="erp-frontend/src/App.jsx">
 import React from 'react';
-import AppRoutes from './routes'; // Importa nuestro nuevo gestor de rutas
+import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from './core/contexts/AuthContext';
+import AppRoutes from './routes';
 
-function App() {
-  return (
-    <div className="erp-container">
+const App = () => (
+  <BrowserRouter>
+    <AuthProvider>
       <AppRoutes />
-    </div>
-  );
-}
+    </AuthProvider>
+  </BrowserRouter>
+);
 
 export default App;
 </file>
 
-<file path="erp-frontend/src/App.test.js">
-import { render, screen } from '@testing-library/react';
-import App from './App';
+<file path="erp-frontend/src/core/components/layout/MainLayout.jsx">
+import React, { useContext } from 'react';
+import { Link as RouterLink, Outlet } from 'react-router-dom';
+import { styled, createTheme, ThemeProvider } from '@mui/material/styles';
+import {
+  CssBaseline,
+  Box,
+  Toolbar,
+  List,
+  Typography,
+  Divider,
+  IconButton,
+  Container,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
+import MuiDrawer from '@mui/material/Drawer';
+import MuiAppBar from '@mui/material/AppBar';
+import MenuIcon from '@mui/icons-material/Menu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import PeopleIcon from '@mui/icons-material/People';
+import LogoutIcon from '@mui/icons-material/Logout';
+import AuthContext from '../../contexts/AuthContext';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
-});
-</file>
+const drawerWidth = 240;
 
-<file path="erp-frontend/src/core/api/apiClient.js">
-import axios from 'axios';
+const AppBar = styled(MuiAppBar, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})(({ theme, open }) => ({
+  zIndex: theme.zIndex.drawer + 1,
+  transition: theme.transitions.create(['width', 'margin'], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  ...(open && {
+    marginLeft: drawerWidth,
+    width: `calc(100% - ${drawerWidth}px)`,
+    transition: theme.transitions.create(['width', 'margin'], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  }),
+}));
 
-const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1',
-  headers: {
-    'Content-Type': 'application/json',
-  }
-});
+const Drawer = styled(MuiDrawer, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})(({ theme, open }) => ({
+  '& .MuiDrawer-paper': {
+    position: 'relative',
+    whiteSpace: 'nowrap',
+    width: drawerWidth,
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+    boxSizing: 'border-box',
+    ...(!open && {
+      overflowX: 'hidden',
+      transition: theme.transitions.create('width', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+      }),
+      width: theme.spacing(7),
+      [theme.breakpoints.up('sm')]: {
+        width: theme.spacing(9),
+      },
+    }),
+  },
+}));
 
-export default apiClient;
-</file>
+const mdTheme = createTheme();
 
-<file path="erp-frontend/src/index.css">
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
-</file>
-
-<file path="erp-frontend/src/index.js">
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import './index.css'; // Estilos globales
-import App from './App';
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
-);
-</file>
-
-<file path="erp-frontend/src/logo.svg">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 595.3"><g fill="#61DAFB"><path d="M666.3 296.5c0-32.5-40.7-63.3-103.1-82.4 14.4-63.6 8-114.2-20.2-130.4-6.5-3.8-14.1-5.6-22.4-5.6v22.3c4.6 0 8.3.9 11.4 2.6 13.6 7.8 19.5 37.5 14.9 75.7-1.1 9.4-2.9 19.3-5.1 29.4-19.6-4.8-41-8.5-63.5-10.9-13.5-18.5-27.5-35.3-41.6-50 32.6-30.3 63.2-46.9 84-46.9V78c-27.5 0-63.5 19.6-99.9 53.6-36.4-33.8-72.4-53.2-99.9-53.2v22.3c20.7 0 51.4 16.5 84 46.6-14 14.7-28 31.4-41.3 49.9-22.6 2.4-44 6.1-63.6 11-2.3-10-4-19.7-5.2-29-4.7-38.2 1.1-67.9 14.6-75.8 3-1.8 6.9-2.6 11.5-2.6V78.5c-8.4 0-16 1.8-22.6 5.6-28.1 16.2-34.4 66.7-19.9 130.1-62.2 19.2-102.7 49.9-102.7 82.3 0 32.5 40.7 63.3 103.1 82.4-14.4 63.6-8 114.2 20.2 130.4 6.5 3.8 14.1 5.6 22.5 5.6 27.5 0 63.5-19.6 99.9-53.6 36.4 33.8 72.4 53.2 99.9 53.2 8.4 0 16-1.8 22.6-5.6 28.1-16.2 34.4-66.7 19.9-130.1 62-19.1 102.5-49.9 102.5-82.3zm-130.2-66.7c-3.7 12.9-8.3 26.2-13.5 39.5-4.1-8-8.4-16-13.1-24-4.6-8-9.5-15.8-14.4-23.4 14.2 2.1 27.9 4.7 41 7.9zm-45.8 106.5c-7.8 13.5-15.8 26.3-24.1 38.2-14.9 1.3-30 2-45.2 2-15.1 0-30.2-.7-45-1.9-8.3-11.9-16.4-24.6-24.2-38-7.6-13.1-14.5-26.4-20.8-39.8 6.2-13.4 13.2-26.8 20.7-39.9 7.8-13.5 15.8-26.3 24.1-38.2 14.9-1.3 30-2 45.2-2 15.1 0 30.2.7 45 1.9 8.3 11.9 16.4 24.6 24.2 38 7.6 13.1 14.5 26.4 20.8 39.8-6.3 13.4-13.2 26.8-20.7 39.9zm32.3-13c5.4 13.4 10 26.8 13.8 39.8-13.1 3.2-26.9 5.9-41.2 8 4.9-7.7 9.8-15.6 14.4-23.7 4.6-8 8.9-16.1 13-24.1zM421.2 430c-9.3-9.6-18.6-20.3-27.8-32 9 .4 18.2.7 27.5.7 9.4 0 18.7-.2 27.8-.7-9 11.7-18.3 22.4-27.5 32zm-74.4-58.9c-14.2-2.1-27.9-4.7-41-7.9 3.7-12.9 8.3-26.2 13.5-39.5 4.1 8 8.4 16 13.1 24 4.7 8 9.5 15.8 14.4 23.4zM420.7 163c9.3 9.6 18.6 20.3 27.8 32-9-.4-18.2-.7-27.5-.7-9.4 0-18.7.2-27.8.7 9-11.7 18.3-22.4 27.5-32zm-74 58.9c-4.9 7.7-9.8 15.6-14.4 23.7-4.6 8-8.9 16-13 24-5.4-13.4-10-26.8-13.8-39.8 13.1-3.1 26.9-5.8 41.2-7.9zm-90.5 125.2c-35.4-15.1-58.3-34.9-58.3-50.6 0-15.7 22.9-35.6 58.3-50.6 8.6-3.7 18-7 27.7-10.1 5.7 19.6 13.2 40 22.5 60.9-9.2 20.8-16.6 41.1-22.2 60.6-9.9-3.1-19.3-6.5-28-10.2zM310 490c-13.6-7.8-19.5-37.5-14.9-75.7 1.1-9.4 2.9-19.3 5.1-29.4 19.6 4.8 41 8.5 63.5 10.9 13.5 18.5 27.5 35.3 41.6 50-32.6 30.3-63.2 46.9-84 46.9-4.5-.1-8.3-1-11.3-2.7zm237.2-76.2c4.7 38.2-1.1 67.9-14.6 75.8-3 1.8-6.9 2.6-11.5 2.6-20.7 0-51.4-16.5-84-46.6 14-14.7 28-31.4 41.3-49.9 22.6-2.4 44-6.1 63.6-11 2.3 10.1 4.1 19.8 5.2 29.1zm38.5-66.7c-8.6 3.7-18 7-27.7 10.1-5.7-19.6-13.2-40-22.5-60.9 9.2-20.8 16.6-41.1 22.2-60.6 9.9 3.1 19.3 6.5 28.1 10.2 35.4 15.1 58.3 34.9 58.3 50.6-.1 15.7-23 35.6-58.4 50.6zM320.8 78.4z"/><circle cx="420.9" cy="296.5" r="45.7"/><path d="M520.5 78.1z"/></g></svg>
-</file>
-
-<file path="erp-frontend/src/modules/auth/pages/LoginPage.js">
-import React from 'react';
-import styles from './LoginPage.module.css'; // Importa los estilos del módulo
-
-const LoginPage = () => {
-  // Por ahora, la lógica del formulario se añadirá después.
-  // Nos enfocamos en la estructura y el estilo.
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert('Funcionalidad de login pendiente.');
+const MainLayout = () => {
+  const { logout } = useContext(AuthContext);
+  const [open, setOpen] = React.useState(true);
+  const toggleDrawer = () => {
+    setOpen(!open);
   };
 
   return (
-    <div className={styles.loginPageContainer}>
-      {/* Panel Izquierdo: Solo el color azul */}
-      <div className={styles.leftPanel}>
-        {/* Futuro espacio para el logo o un eslogan */}
-      </div>
-
-      {/* Panel Derecho: El formulario */}
-      <div className={styles.rightPanel}>
-        <div className={styles.loginFormContainer}>
-
-          <h2>Bienvenido de nuevo</h2>
-          <p>Inicie sesión en su cuenta.</p>
-
-          <form onSubmit={handleSubmit}>
-            <div className={styles.formGroup}>
-              <label htmlFor="username">Usuario</label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                className={styles.inputField}
-                placeholder="ej: admin@empresa.com"
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label htmlFor="password">Contraseña</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                className={styles.inputField}
-                placeholder="••••••••"
-              />
-            </div>
-            <button type="submit" className={styles.submitButton}>
-              Ingresar
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
+    <ThemeProvider theme={mdTheme}>
+      <Box sx={{ display: 'flex' }}>
+        <CssBaseline />
+        <AppBar position="absolute" open={open}>
+          <Toolbar sx={{ pr: '24px' }}>
+            <IconButton
+              edge="start"
+              color="inherit"
+              aria-label="open drawer"
+              onClick={toggleDrawer}
+              sx={{ marginRight: '36px', ...(open && { display: 'none' }) }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography component="h1" variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
+              ERP Dashboard
+            </Typography>
+          </Toolbar>
+        </AppBar>
+        <Drawer variant="permanent" open={open}>
+          <Toolbar
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              px: [1],
+            }}
+          >
+            <IconButton onClick={toggleDrawer}>
+              <ChevronLeftIcon />
+            </IconButton>
+          </Toolbar>
+          <Divider />
+          <List component="nav">
+            <ListItemButton component={RouterLink} to="/subscribers">
+              <ListItemIcon>
+                <PeopleIcon />
+              </ListItemIcon>
+              <ListItemText primary="Suscritos" />
+            </ListItemButton>
+            <Divider sx={{ my: 1 }} />
+            <ListItemButton onClick={logout}>
+              <ListItemIcon>
+                <LogoutIcon />
+              </ListItemIcon>
+              <ListItemText primary="Salir" />
+            </ListItemButton>
+          </List>
+        </Drawer>
+        <Box
+          component="main"
+          sx={{
+            backgroundColor: (theme) =>
+              theme.palette.mode === 'light'
+                ? theme.palette.grey[100]
+                : theme.palette.grey[900],
+            flexGrow: 1,
+            height: '100vh',
+            overflow: 'auto',
+          }}
+        >
+          <Toolbar />
+          <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Outlet />
+          </Container>
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 
-export default LoginPage;
+export default MainLayout;
 </file>
 
-<file path="erp-frontend/src/modules/auth/pages/LoginPage.module.css">
-/* erp-frontend/src/modules/auth/pages/LoginPage.module.css */
+<file path="erp-frontend/src/core/contexts/AuthContext.jsx">
+import React, { createContext, useState } from 'react';
 
-.loginPageContainer {
-  display: flex;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-}
+const AuthContext = createContext();
 
-.leftPanel {
-  flex: 1;
-  background-color: #007bff; /* Un azul estándar y agradable */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  /* Aquí podría añadir un logo o un gráfico en el futuro */
-}
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
 
-.rightPanel {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f8f9fa;
-}
+  const login = async ({ email, password }) => {
+    if (email === 'admin@example.com' && password === 'password') {
+      setUser({ id: 1, name: 'Admin User' });
+    } else {
+      throw new Error('Credenciales inválidas');
+    }
+  };
 
-.loginFormContainer {
-  width: 100%;
-  max-width: 400px;
-  padding: 2rem;
-  text-align: left;
-}
+  const logout = () => setUser(null);
 
-.loginFormContainer h2 {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  color: #212529;
-  margin-bottom: 0.5rem;
-}
-
-.loginFormContainer p {
-  font-size: var(--font-size-lg);
-  color: #6c757d;
-  margin-bottom: 2rem;
-}
-
-.formGroup {
-  margin-bottom: 1.5rem;
-}
-
-.formGroup label {
-  display: block;
-  font-weight: var(--font-weight-medium);
-  margin-bottom: 0.5rem;
-  color: #495057;
-}
-
-.inputField {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: var(--font-size-lg);
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.inputField:focus {
-  outline: none;
-  border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
-}
-
-.submitButton {
-  width: 100%;
-  padding: 0.75rem;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: #fff;
-  background-color: #007bff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.submitButton:hover {
-  background-color: #0056b3;
-}
-
-/* --- Responsive Design --- */
-@media (max-width: 768px) {
-  .leftPanel {
-    display: none; /* Ocultamos el panel azul en pantallas pequeñas */
-  }
-  .rightPanel {
-    flex: 1 1 100%; /* El panel derecho ocupa todo el espacio */
-  }
-}
-</file>
-
-<file path="erp-frontend/src/reportWebVitals.js">
-const reportWebVitals = onPerfEntry => {
-  if (onPerfEntry && onPerfEntry instanceof Function) {
-    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
-      getCLS(onPerfEntry);
-      getFID(onPerfEntry);
-      getFCP(onPerfEntry);
-      getLCP(onPerfEntry);
-      getTTFB(onPerfEntry);
-    });
-  }
-};
-
-export default reportWebVitals;
-</file>
-
-<file path="erp-frontend/src/routes/index.js">
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import LoginPage from '../modules/auth/pages/LoginPage';
-
-const AppRoutes = () => {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      {/* Por ahora, cualquier otra ruta redirigirá al login */}
-      <Route path="*" element={<LoginPage />} /> 
-    </Routes>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+      {children}
+    </AuthContext.Provider>
   );
 };
+
+export default AuthContext;
+</file>
+
+<file path="erp-frontend/src/main.jsx">
+// src/main.jsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { ThemeProvider, CssBaseline } from '@mui/material'
+import '@fontsource-variable/inter' // opcional
+import App from './App'
+import theme from './theme'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <App />
+    </ThemeProvider>
+  </React.StrictMode>
+)
+</file>
+
+<file path="erp-frontend/src/modules/admin/components/SubscriberTable.jsx">
+import React from 'react';
+import { Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
+
+const SubscriberTable = ({ data }) => (
+  <Table>
+    <TableHead>
+      <TableRow>
+        <TableCell>Nombre</TableCell>
+        <TableCell>Tipo</TableCell>
+        <TableCell>Estado</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {data.map((subscriber) => (
+        <TableRow key={subscriber.id}>
+          <TableCell>{subscriber.name}</TableCell>
+          <TableCell>{subscriber.type}</TableCell>
+          <TableCell>{subscriber.status}</TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
+);
+
+export default SubscriberTable;
+</file>
+
+<file path="erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx">
+import React from 'react';
+import SubscriberTable from '../components/SubscriberTable';
+
+const subscribers = [
+  { id: 1, name: 'Empresa ABC', type: 'Empresa', status: 'Activa' },
+  { id: 2, name: 'Juan Pérez', type: 'Persona', status: 'Activa' },
+];
+
+const SubscriberListPage = () => (
+  <div>
+    <h1>Suscriptores</h1>
+    <SubscriberTable data={subscribers} />
+  </div>
+);
+
+export default SubscriberListPage;
+</file>
+
+<file path="erp-frontend/src/modules/auth/pages/LoginPage.jsx">
+// =============================================
+// 4) src/modules/auth/pages/LoginPage.jsx
+// =============================================
+import * as React from 'react';
+import { useState } from 'react';
+import {
+  Avatar,
+  Box,
+  Button,
+  Checkbox,
+  Container,
+  FormControlLabel,
+  InputAdornment,
+  Link,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import KeyIcon from '@mui/icons-material/Key';
+
+
+export default function LoginPage() {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    const email = data.get('email');
+    const password = data.get('password');
+    try {
+      setLoading(true);
+      // TODO: replace with your auth context / API call
+      // demo behaviour: accept admin@example.com / password
+      if (email === 'admin@example.com' && password === 'password') {
+        // navigate('/dashboard') if you use react-router
+        console.log('Logged in!');
+      } else {
+        alert('Credenciales inválidas (usa admin@example.com / password para demo)');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Container component="main" maxWidth="xs" sx={{ display: 'grid', placeItems: 'center', minHeight: '100dvh' }}>
+      <Paper sx={{ p: 4, width: '100%' }}>
+        <Stack alignItems="center" spacing={2} sx={{ mb: 2 }}>
+          <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
+            <LockOutlinedIcon />
+          </Avatar>
+          <Typography variant="h4">Iniciar sesión</Typography>
+          <Typography variant="body2" color="text.secondary">Bienvenido de nuevo, ingresa tus credenciales.</Typography>
+        </Stack>
+
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+          <Stack spacing={2}>
+            <TextField
+              name="email"
+              label="Correo electrónico"
+              type="email"
+              fullWidth
+              required
+              autoFocus
+              InputProps={{ startAdornment: (
+                <InputAdornment position="start"><MailOutlineIcon /></InputAdornment>
+              ) }}
+            />
+
+            <TextField
+              name="password"
+              label="Contraseña"
+              type="password"
+              fullWidth
+              required
+              InputProps={{ startAdornment: (
+                <InputAdornment position="start"><KeyIcon /></InputAdornment>
+              ) }}
+            />
+
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <FormControlLabel control={<Checkbox defaultChecked />} label="Recordarme" />
+              <Link href="#" variant="body2">¿Olvidaste tu contraseña?</Link>
+            </Stack>
+
+            <Button type="submit" variant="contained" size="large" disabled={loading}>
+              {loading ? 'Ingresando…' : 'Ingresar'}
+            </Button>
+
+            <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
+              Demo: admin@example.com / password
+            </Typography>
+          </Stack>
+        </Box>
+      </Paper>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/routes/index.jsx">
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from '../modules/auth/pages/LoginPage';
+import ProtectedRoute from './ProtectedRoute';
+import MainLayout from '../core/components/layout/MainLayout';
+import SubscriberListPage from '../modules/admin/pages/SubscriberListPage';
+
+const AppRoutes = () => (
+  <Routes>
+    <Route path="/login" element={<LoginPage />} />
+    <Route
+      path="/"
+      element={
+        <ProtectedRoute>
+          <MainLayout />
+        </ProtectedRoute>
+      }
+    >
+      <Route index element={<Navigate to="subscribers" replace />} />
+      <Route path="subscribers" element={<SubscriberListPage />} />
+    </Route>
+  </Routes>
+);
 
 export default AppRoutes;
 </file>
 
-<file path="erp-frontend/src/setupTests.js">
-// jest-dom adds custom jest matchers for asserting on DOM nodes.
-// allows you to do things like:
-// expect(element).toHaveTextContent(/react/i)
-// learn more: https://github.com/testing-library/jest-dom
-import '@testing-library/jest-dom';
+<file path="erp-frontend/src/routes/ProtectedRoute.jsx">
+import React, { useContext } from 'react';
+import { Navigate } from 'react-router-dom';
+import AuthContext from '../core/contexts/AuthContext';
+
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated } = useContext(AuthContext);
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
+export default ProtectedRoute;
+</file>
+
+<file path="erp-frontend/vite.config.js">
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+});
+</file>
+
+<file path="docker-compose.yml">
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: erp_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=erp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    container_name: erp_backend
+    build:
+      context: ./erp-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/erp
+    volumes:
+      - ./erp-backend:/app
+    depends_on:
+      - db
+
+  frontend:
+    container_name: erp_frontend
+    build:
+      context: ./erp-frontend
+      args:
+        - VITE_API_BASE_URL=http://localhost:8000/api/v1
+    ports:
+      - "3000:3000" # puerto del servidor de desarrollo de Vite
+    environment:
+      - CHOKIDAR_USEPOLLING=true # hot-reload dentro de Docker
+    volumes:
+      - ./erp-frontend:/app
+      - /app/node_modules # evita que node_modules local sobreescriba el del contenedor
+    command: ["npm", "start"]
+
+volumes:
+  postgres_data:
 </file>
 
 </files>
