@@ -1,4 +1,2 @@
-// =============================================
-// 1) src/theme/index.js
-// =============================================
-export { default } from "./theme";
+// PATH: erp-frontend/src/theme/index.js
+export { getAppTheme } from './theme';

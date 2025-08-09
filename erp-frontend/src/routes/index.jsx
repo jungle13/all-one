@@ -1,25 +1,25 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from '../modules/auth/pages/LoginPage';
-import ProtectedRoute from './ProtectedRoute';
 import MainLayout from '../core/components/layout/MainLayout';
+import ProtectedRoute from './ProtectedRoute';
+import LoginPage from '../modules/auth/pages/LoginPage';
+import Dashboard from '../modules/dashboard/pages/Dashboard';
 import SubscriberListPage from '../modules/admin/pages/SubscriberListPage';
 
-const AppRoutes = () => (
-  <Routes>
-    <Route path="/login" element={<LoginPage />} />
-    <Route
-      path="/"
-      element={
-        <ProtectedRoute>
-          <MainLayout />
-        </ProtectedRoute>
-      }
-    >
-      <Route index element={<Navigate to="subscribers" replace />} />
-      <Route path="subscribers" element={<SubscriberListPage />} />
-    </Route>
-  </Routes>
-);
+export default function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
 
-export default AppRoutes;
+      <Route element={<ProtectedRoute />}>
+        <Route element={<MainLayout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/subscribers" element={<SubscriberListPage />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}

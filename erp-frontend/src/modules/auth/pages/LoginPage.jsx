@@ -4,26 +4,19 @@
 import * as React from 'react';
 import { useState } from 'react';
 import {
-  Avatar,
-  Box,
-  Button,
-  Checkbox,
-  Container,
-  FormControlLabel,
-  InputAdornment,
-  Link,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
+  Avatar, Box, Button, Checkbox, Container, FormControlLabel,
+  InputAdornment, Link, Paper, Stack, TextField, Typography
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import KeyIcon from '@mui/icons-material/Key';
-
+import { useAuth } from '../../../core/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,14 +25,10 @@ export default function LoginPage() {
     const password = data.get('password');
     try {
       setLoading(true);
-      // TODO: replace with your auth context / API call
-      // demo behaviour: accept admin@example.com / password
-      if (email === 'admin@example.com' && password === 'password') {
-        // navigate('/dashboard') if you use react-router
-        console.log('Logged in!');
-      } else {
-        alert('Credenciales inválidas (usa admin@example.com / password para demo)');
-      }
+      await login(email, password);     // mock demo en el AuthContext
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      alert(err.message || 'No se pudo iniciar sesión');
     } finally {
       setLoading(false);
     }
