@@ -105,7 +105,7 @@ export default function MainLayout() {
           </IconButton>
 
           <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 0.2 }}>
-            ERP Admin
+            ELIANA ERP
           </Typography>
 
           <Box sx={{ flex: 1 }} />

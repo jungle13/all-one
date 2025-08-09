@@ -37,7 +37,7 @@ export default function SubscriberListPage() {
         title="Suscriptores"
         subtitle="Administra los suscriptores del ERP"
         breadcrumbs={[{ label: 'Inicio', href: '/' }, { label: 'Suscriptores' }]}
-        actions={<Button variant="contained" onClick={handleAdd}>Nuevo</Button>}
+        
       />
 
       <SubscriberTable

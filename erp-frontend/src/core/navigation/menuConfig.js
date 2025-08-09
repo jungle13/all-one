@@ -1,41 +1,45 @@
 // PATH: erp-frontend/src/core/navigation/menuConfig.js
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
-import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
+// Menú lateral basado en roles. Añadimos "Módulos".
 
 export const ROLES = {
   ADMIN: 'admin',
   MANAGER: 'manager',
-  VIEWER: 'viewer',
+  USER: 'user',
 };
 
-/**
- * Menú centralizado con íconos y permisos.
- * - El PRIMER ítem es "Subscriptores".
- * - Usa `allowedRoles` para visibilidad por rol.
- */
 export const menuItems = [
   {
     id: 'subscribers',
-    label: 'Subscriptores',
+    label: 'Subscribers',
+    icon: 'PeopleAltRounded',
     path: '/subscribers',
-    icon: PeopleAltRoundedIcon,
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
+  },
+  {
+    id: 'modules',
+    label: 'Módulos',
+    icon: 'ViewModuleRounded',
+    path: '/modules',
     allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
   },
   {
     id: 'dashboard',
     label: 'Dashboard',
+    icon: 'DashboardRounded',
     path: '/dashboard',
-    icon: DashboardRoundedIcon,
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.VIEWER],
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.USER],
   },
 ];
 
-export function getMenuForRole(role) {
-  return menuItems.filter((item) => !item.allowedRoles || item.allowedRoles.includes(role));
+// Helper para filtrar por rol
+export function getMenuForRole(role = ROLES.USER) {
+  return menuItems.filter(
+    (item) => !item.allowedRoles || item.allowedRoles.includes(role)
+  );
 }
 
-// Compatibilidad: si en algún archivo se importó { menuConfig }
+// Export alias para mantener compatibilidad con importaciones existentes
 export const menuConfig = menuItems;
 
-// (Opcional) default export si alguien usa `import menu from ...`
 export default menuItems;
+

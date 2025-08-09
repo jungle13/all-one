@@ -99,14 +99,15 @@ erp-frontend/package.json
 erp-frontend/src/App.jsx
 erp-frontend/src/core/api/apiClient.js
 erp-frontend/src/core/components/layout/MainLayout.jsx
-erp-frontend/src/core/components/SubscriberTable.jsx
 erp-frontend/src/core/components/ui/KpiCard.jsx
 erp-frontend/src/core/components/ui/PageHeader.jsx
 erp-frontend/src/core/contexts/AuthContext.jsx
 erp-frontend/src/core/contexts/ThemeModeContext.jsx
 erp-frontend/src/core/navigation/menuConfig.js
 erp-frontend/src/main.jsx
+erp-frontend/src/modules/admin/components/ModuleTable.jsx
 erp-frontend/src/modules/admin/components/SubscriberTable.jsx
+erp-frontend/src/modules/admin/pages/ModuleListPage.jsx
 erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx
 erp-frontend/src/modules/auth/pages/LoginPage.jsx
 erp-frontend/src/modules/dashboard/pages/Dashboard.jsx
@@ -119,6 +120,269 @@ erp-frontend/vite.config.js
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="erp-frontend/src/modules/admin/components/ModuleTable.jsx">
+// PATH: erp-frontend/src/modules/admin/components/ModuleTable.jsx
+import * as React from 'react';
+import { Box, Chip, Stack, Tooltip, Switch, Button } from '@mui/material';
+import {
+  DataGrid,
+  GridActionsCellItem,
+  GridToolbarContainer,
+  GridToolbarQuickFilter,
+} from '@mui/x-data-grid';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+
+/** Toolbar dentro del contexto del DataGrid */
+function ModulesToolbar({ onAdd }) {
+  return (
+    <GridToolbarContainer sx={{ px: 1, py: 0.5, display: 'flex', gap: 1, justifyContent: 'space-between' }}>
+      <GridToolbarQuickFilter
+        quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)}
+      />
+      <Tooltip title="Nuevo módulo">
+        <span>
+          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => onAdd?.()}>
+            Nuevo módulo
+          </Button>
+        </span>
+      </Tooltip>
+    </GridToolbarContainer>
+  );
+}
+
+/**
+ * Tabla reutilizable para Módulos.
+ * - Tolera rows undefined (usa [] por defecto).
+ * - Callbacks: Add/Edit/Delete/Toggle.
+ */
+export default function ModuleTable({
+  rows = [],
+  onAdd,
+  onEdit,
+  onDelete,
+  onToggleEnabled,
+}) {
+  const columns = React.useMemo(
+    () => [
+      { field: 'name', headerName: 'Módulo', flex: 1, minWidth: 220 },
+      {
+        field: 'key',
+        headerName: 'Clave',
+        width: 180,
+        valueFormatter: (v) => v?.value ?? '—',
+      },
+      {
+        field: 'enabled',
+        headerName: 'Estado',
+        width: 180,
+        sortable: false,
+        renderCell: (params) => {
+          const enabled = Boolean(params.value);
+          return (
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Switch
+                checked={enabled}
+                onChange={() => onToggleEnabled?.(params.row)}
+                inputProps={{ 'aria-label': 'Cambiar estado' }}
+              />
+              <Chip
+                size="small"
+                color={enabled ? 'success' : 'default'}
+                label={enabled ? 'Activo' : 'Inactivo'}
+              />
+            </Stack>
+          );
+        },
+      },
+      {
+        field: 'actions',
+        type: 'actions',
+        headerName: 'Acciones',
+        width: 120,
+        getActions: (params) => [
+          <GridActionsCellItem
+            key="edit"
+            icon={<EditRoundedIcon />}
+            label="Editar"
+            onClick={() => onEdit?.(params.row)}
+          />,
+          <GridActionsCellItem
+            key="delete"
+            icon={<DeleteOutlineRoundedIcon />}
+            label="Eliminar"
+            onClick={() => onDelete?.(params.row)}
+          />,
+        ],
+      },
+    ],
+    [onEdit, onDelete, onToggleEnabled]
+  );
+
+  return (
+    <Box sx={{ height: 560, width: '100%' }}>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        getRowId={(r) => r.id}
+        disableRowSelectionOnClick
+        pageSizeOptions={[5, 10, 25]}
+        initialState={{
+          pagination: { paginationModel: { pageSize: 10 } },
+        }}
+        slots={{ toolbar: ModulesToolbar }}
+        slotProps={{ toolbar: { onAdd } }}
+        sx={{ border: 'none', height: '100%' }}
+      />
+    </Box>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/admin/pages/ModuleListPage.jsx">
+// PATH: erp-frontend/src/modules/admin/pages/ModuleListPage.jsx
+import * as React from 'react';
+import {
+  Box,
+  Button,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  Stack,
+  TextField,
+} from '@mui/material';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import ModuleTable from '../components/ModuleTable';
+
+// Datos iniciales (mock) según tu lista
+const INITIAL_MODULES = [
+  { id: 'cartera', name: 'Gestión de Cartera', key: 'cartera', enabled: true },
+  { id: 'inventario', name: 'Gestión de Inventario', key: 'inventario', enabled: true },
+  { id: 'facturacion', name: 'Facturación', key: 'facturacion', enabled: true },
+  { id: 'pos', name: 'Sistema POS', key: 'pos', enabled: false },
+  { id: 'crm', name: 'CRM (Gestión de clientes)', key: 'crm', enabled: true },
+  { id: 'proveedores', name: 'Gestión de Proveedores', key: 'proveedores', enabled: false },
+  { id: 'compras', name: 'Gestión de Compras', key: 'compras', enabled: false },
+  { id: 'documental', name: 'Gestión Documental', key: 'documental', enabled: false },
+  { id: 'citas', name: 'Gestión de Citas', key: 'citas', enabled: false },
+  { id: 'proyectos', name: 'Gestión de Proyectos', key: 'proyectos', enabled: false },
+  { id: 'informes', name: 'Gestión de Informes', key: 'informes', enabled: true },
+  { id: 'contabilidad', name: 'Contabilidad', key: 'contabilidad', enabled: false },
+  { id: 'rifas', name: 'Gestión de Rifas', key: 'rifas', enabled: true },
+];
+
+export default function ModuleListPage() {
+  const [rows, setRows] = React.useState(INITIAL_MODULES);
+
+  // Estado del diálogo de crear/editar
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [editing, setEditing] = React.useState(null);
+  const [form, setForm] = React.useState({ name: '', key: '' });
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ name: '', key: '' });
+    setDialogOpen(true);
+  };
+
+  const openEdit = (row) => {
+    setEditing(row);
+    setForm({ name: row.name ?? '', key: row.key ?? '' });
+    setDialogOpen(true);
+  };
+
+  const closeDialog = () => setDialogOpen(false);
+
+  const handleSave = () => {
+    const name = form.name.trim();
+    const key = form.key.trim();
+    if (!name || !key) return;
+
+    if (editing) {
+      setRows((prev) =>
+        prev.map((r) => (r.id === editing.id ? { ...r, name, key } : r))
+      );
+    } else {
+      const id = key.toLowerCase().replace(/\s+/g, '-');
+      // Evitar IDs duplicados
+      if (rows.some((r) => r.id === id)) {
+        alert('Ya existe un módulo con esa clave.');
+        return;
+      }
+      setRows((prev) => [{ id, name, key, enabled: true }, ...prev]);
+    }
+    setDialogOpen(false);
+  };
+
+  const handleDelete = (row) => {
+    if (confirm(`¿Eliminar el módulo "${row.name}"?`)) {
+      setRows((prev) => prev.filter((r) => r.id !== row.id));
+    }
+  };
+
+  const handleToggleEnabled = (row) => {
+    setRows((prev) =>
+      prev.map((r) => (r.id === row.id ? { ...r, enabled: !r.enabled } : r))
+    );
+  };
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Módulos"
+        subtitle="Activa/inhabilita módulos del ERP y administra su catálogo"
+        breadcrumbs={[{ label: 'Inicio', href: '/' }, { label: 'Módulos' }]}
+        
+      />
+
+      <Paper sx={{ p: 2 }}>
+        <ModuleTable
+          rows={rows}
+          onAdd={openCreate}
+          onEdit={openEdit}
+          onDelete={handleDelete}
+          onToggleEnabled={handleToggleEnabled}
+        />
+      </Paper>
+
+      <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
+        <DialogTitle>{editing ? 'Editar módulo' : 'Nuevo módulo'}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Nombre del módulo"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              autoFocus
+              required
+              fullWidth
+            />
+            <TextField
+              label="Clave (única)"
+              value={form.key}
+              onChange={(e) => setForm((f) => ({ ...f, key: e.target.value }))}
+              helperText="Se usará como identificador interno. Ej: 'inventario'"
+              required
+              fullWidth
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDialog}>Cancelar</Button>
+          <Button variant="contained" onClick={handleSave}>
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
+  );
+}
+</file>
 
 <file path="erp-backend/.dockerignore">
 
@@ -3346,34 +3610,6 @@ export const useThemeMode = () => useContext(ThemeModeContext);
 export default ThemeModeContext;
 </file>
 
-<file path="erp-frontend/src/modules/admin/components/SubscriberTable.jsx">
-import React from 'react';
-import { Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
-
-const SubscriberTable = ({ data }) => (
-  <Table>
-    <TableHead>
-      <TableRow>
-        <TableCell>Nombre</TableCell>
-        <TableCell>Tipo</TableCell>
-        <TableCell>Estado</TableCell>
-      </TableRow>
-    </TableHead>
-    <TableBody>
-      {data.map((subscriber) => (
-        <TableRow key={subscriber.id}>
-          <TableCell>{subscriber.name}</TableCell>
-          <TableCell>{subscriber.type}</TableCell>
-          <TableCell>{subscriber.status}</TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
-);
-
-export default SubscriberTable;
-</file>
-
 <file path="erp-frontend/vite.config.js">
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -3429,35 +3665,6 @@ volumes:
   postgres_data:
 </file>
 
-<file path="erp-frontend/src/core/components/SubscriberTable.jsx">
-// PATH: erp-frontend/src/modules/admin/components/SubscriberTable.jsx
-import React from 'react';
-import { Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
-
-const SubscriberTable = ({ data = [] }) => (
-  <Table>
-    <TableHead>
-      <TableRow>
-        <TableCell>Nombre</TableCell>
-        <TableCell>Tipo</TableCell>
-        <TableCell>Estado</TableCell>
-      </TableRow>
-    </TableHead>
-    <TableBody>
-      {data.map((subscriber) => (
-        <TableRow key={subscriber.id}>
-          <TableCell>{subscriber.name}</TableCell>
-          <TableCell>{subscriber.type}</TableCell>
-          <TableCell>{subscriber.status}</TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
-);
-
-export default SubscriberTable;
-</file>
-
 <file path="erp-frontend/src/core/contexts/AuthContext.jsx">
 // PATH: erp-frontend/src/core/contexts/AuthContext.jsx
 import React, { createContext, useContext, useMemo, useState } from 'react';
@@ -3510,46 +3717,130 @@ export default AuthContext;
 
 <file path="erp-frontend/src/core/navigation/menuConfig.js">
 // PATH: erp-frontend/src/core/navigation/menuConfig.js
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
-import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
+// Menú lateral basado en roles. Añadimos "Módulos".
 
 export const ROLES = {
   ADMIN: 'admin',
   MANAGER: 'manager',
-  VIEWER: 'viewer',
+  USER: 'user',
 };
 
-/**
- * Menú centralizado con íconos y permisos.
- * - El PRIMER ítem es "Subscriptores".
- * - Usa `allowedRoles` para visibilidad por rol.
- */
 export const menuItems = [
   {
     id: 'subscribers',
-    label: 'Subscriptores',
+    label: 'Subscribers',
+    icon: 'PeopleAltRounded',
     path: '/subscribers',
-    icon: PeopleAltRoundedIcon,
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
+  },
+  {
+    id: 'modules',
+    label: 'Módulos',
+    icon: 'ViewModuleRounded',
+    path: '/modules',
     allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
   },
   {
     id: 'dashboard',
     label: 'Dashboard',
+    icon: 'DashboardRounded',
     path: '/dashboard',
-    icon: DashboardRoundedIcon,
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.VIEWER],
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.USER],
   },
 ];
 
-export function getMenuForRole(role) {
-  return menuItems.filter((item) => !item.allowedRoles || item.allowedRoles.includes(role));
+// Helper para filtrar por rol
+export function getMenuForRole(role = ROLES.USER) {
+  return menuItems.filter(
+    (item) => !item.allowedRoles || item.allowedRoles.includes(role)
+  );
 }
 
-// Compatibilidad: si en algún archivo se importó { menuConfig }
+// Export alias para mantener compatibilidad con importaciones existentes
 export const menuConfig = menuItems;
 
-// (Opcional) default export si alguien usa `import menu from ...`
 export default menuItems;
+</file>
+
+<file path="erp-frontend/src/modules/admin/components/SubscriberTable.jsx">
+// PATH: erp-frontend/src/modules/admin/components/SubscriberTable.jsx
+import * as React from 'react';
+import { Box, Button } from '@mui/material';
+import {
+  DataGrid,
+  GridActionsCellItem,
+  GridToolbarContainer,
+  GridToolbarQuickFilter,
+} from '@mui/x-data-grid';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+
+/** Toolbar dentro del contexto del DataGrid */
+function SubscribersToolbar({ onAdd }) {
+  return (
+    <GridToolbarContainer sx={{ px: 1, py: 0.5, display: 'flex', gap: 1, justifyContent: 'space-between' }}>
+      <GridToolbarQuickFilter
+        quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)}
+      />
+      <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => onAdd?.()}>
+        Nuevo suscriptor
+      </Button>
+    </GridToolbarContainer>
+  );
+}
+
+export default function SubscriberTable({ rows, data, onAdd, onEdit, onDelete }) {
+  const safeRows = React.useMemo(() => {
+    if (Array.isArray(rows)) return rows;
+    if (Array.isArray(data)) return data;
+    return [];
+  }, [rows, data]);
+
+  const columns = React.useMemo(() => [
+    { field: 'name', headerName: 'Nombre', flex: 1, minWidth: 180 },
+    { field: 'email', headerName: 'Correo', flex: 1, minWidth: 220 },
+    { field: 'plan', headerName: 'Plan', width: 140, valueGetter: (v, r) => r?.plan ?? '—' },
+    { field: 'status', headerName: 'Estado', width: 140, valueGetter: (v, r) => r?.status ?? '—' },
+    {
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Acciones',
+      width: 120,
+      getActions: (params) => [
+        <GridActionsCellItem
+          key="edit"
+          icon={<EditRoundedIcon />}
+          label="Editar"
+          onClick={() => onEdit?.(params.row)}
+        />,
+        <GridActionsCellItem
+          key="delete"
+          icon={<DeleteOutlineRoundedIcon />}
+          label="Eliminar"
+          onClick={() => onDelete?.(params.row)}
+        />,
+      ],
+    },
+  ], [onEdit, onDelete]);
+
+  return (
+    <Box sx={{ width: '100%' }}>
+      <DataGrid
+        rows={safeRows}
+        getRowId={(r) => r.id ?? r._id ?? `${r.email}-${r.name}`}
+        columns={columns}
+        disableRowSelectionOnClick
+        density="comfortable"
+        pageSizeOptions={[5, 10]}
+        initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
+        slots={{ toolbar: SubscribersToolbar }}
+        slotProps={{ toolbar: { onAdd } }}
+        sx={{ border: 'none', height: 520 }}
+      />
+    </Box>
+  );
+}
 </file>
 
 <file path="erp-frontend/src/modules/dashboard/pages/Dashboard.jsx">
@@ -3654,6 +3945,7 @@ export default function Dashboard() {
 </file>
 
 <file path="erp-frontend/src/routes/index.jsx">
+// PATH: erp-frontend/src/routes/index.jsx
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from '../core/components/layout/MainLayout';
@@ -3661,20 +3953,20 @@ import ProtectedRoute from './ProtectedRoute';
 import LoginPage from '../modules/auth/pages/LoginPage';
 import Dashboard from '../modules/dashboard/pages/Dashboard';
 import SubscriberListPage from '../modules/admin/pages/SubscriberListPage';
+import ModuleListPage from '../modules/admin/pages/ModuleListPage';
 
 export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/subscribers" element={<SubscriberListPage />} />
+          <Route path="/modules" element={<ModuleListPage />} />
         </Route>
       </Route>
-
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
@@ -4014,7 +4306,7 @@ export default function MainLayout() {
           </IconButton>
 
           <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 0.2 }}>
-            ERP Admin
+            ELIANA ERP
           </Typography>
 
           <Box sx={{ flex: 1 }} />
@@ -4149,7 +4441,7 @@ export default function SubscriberListPage() {
         title="Suscriptores"
         subtitle="Administra los suscriptores del ERP"
         breadcrumbs={[{ label: 'Inicio', href: '/' }, { label: 'Suscriptores' }]}
-        actions={<Button variant="contained" onClick={handleAdd}>Nuevo</Button>}
+        
       />
 
       <SubscriberTable
