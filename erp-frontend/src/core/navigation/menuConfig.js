@@ -1,5 +1,7 @@
 // PATH: erp-frontend/src/core/navigation/menuConfig.js
-// Menú lateral basado en roles. Añadimos "Módulos".
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
+import ViewModuleRoundedIcon from '@mui/icons-material/ViewModuleRounded';
 
 export const ROLES = {
   ADMIN: 'admin',
@@ -7,39 +9,44 @@ export const ROLES = {
   USER: 'user',
 };
 
+/**
+ * Menú del ADMIN (layout principal).
+ * IMPORTANTE: `icon` DEBE ser un componente React (no un string).
+ */
 export const menuItems = [
   {
     id: 'subscribers',
-    label: 'Subscribers',
-    icon: 'PeopleAltRounded',
+    label: 'Suscriptores',
     path: '/subscribers',
+    icon: PeopleAltRoundedIcon,           // ✅ componente
     allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
   },
   {
     id: 'modules',
     label: 'Módulos',
-    icon: 'ViewModuleRounded',
     path: '/modules',
+    icon: ViewModuleRoundedIcon,          // ✅ componente
     allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
   },
   {
     id: 'dashboard',
     label: 'Dashboard',
-    icon: 'DashboardRounded',
     path: '/dashboard',
+    icon: DashboardRoundedIcon,           // ✅ componente
     allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.USER],
   },
 ];
 
-// Helper para filtrar por rol
 export function getMenuForRole(role = ROLES.USER) {
   return menuItems.filter(
     (item) => !item.allowedRoles || item.allowedRoles.includes(role)
   );
 }
 
-// Export alias para mantener compatibilidad con importaciones existentes
+// Alias de compatibilidad si en alguna parte se importa { menuConfig }
 export const menuConfig = menuItems;
 
+// Default export opcional
 export default menuItems;
+
 

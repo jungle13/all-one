@@ -1,6 +1,6 @@
 // PATH: erp-frontend/src/modules/admin/components/ModuleTable.jsx
 import * as React from 'react';
-import { Box, Chip, Stack, Tooltip, Switch, Button } from '@mui/material';
+import { Box, Chip, Stack, Tooltip, Switch, Button, IconButton } from '@mui/material';
 import {
   DataGrid,
   GridActionsCellItem,
@@ -10,14 +10,14 @@ import {
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
+import { useNavigate } from 'react-router-dom';
 
 /** Toolbar dentro del contexto del DataGrid */
 function ModulesToolbar({ onAdd }) {
   return (
     <GridToolbarContainer sx={{ px: 1, py: 0.5, display: 'flex', gap: 1, justifyContent: 'space-between' }}>
-      <GridToolbarQuickFilter
-        quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)}
-      />
+      <GridToolbarQuickFilter quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)} />
       <Tooltip title="Nuevo módulo">
         <span>
           <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => onAdd?.()}>
@@ -41,6 +41,8 @@ export default function ModuleTable({
   onDelete,
   onToggleEnabled,
 }) {
+  const navigate = useNavigate();
+
   const columns = React.useMemo(
     () => [
       { field: 'name', headerName: 'Módulo', flex: 1, minWidth: 220 },
@@ -64,37 +66,50 @@ export default function ModuleTable({
                 onChange={() => onToggleEnabled?.(params.row)}
                 inputProps={{ 'aria-label': 'Cambiar estado' }}
               />
-              <Chip
-                size="small"
-                color={enabled ? 'success' : 'default'}
-                label={enabled ? 'Activo' : 'Inactivo'}
-              />
+              <Chip size="small" color={enabled ? 'success' : 'default'} label={enabled ? 'Activo' : 'Inactivo'} />
             </Stack>
           );
         },
       },
       {
         field: 'actions',
-        type: 'actions',
         headerName: 'Acciones',
-        width: 120,
-        getActions: (params) => [
-          <GridActionsCellItem
-            key="edit"
-            icon={<EditRoundedIcon />}
-            label="Editar"
-            onClick={() => onEdit?.(params.row)}
-          />,
-          <GridActionsCellItem
-            key="delete"
-            icon={<DeleteOutlineRoundedIcon />}
-            label="Eliminar"
-            onClick={() => onDelete?.(params.row)}
-          />,
-        ],
+        width: 220,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+          const isRaffles = params.row?.id === 'rifas' || params.row?.key === 'rifas';
+          if (isRaffles) {
+            return (
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<LoginRoundedIcon />}
+                onClick={() => navigate('/raffles')}
+              >
+                Ingresar
+              </Button>
+            );
+          }
+          // Acciones estándar para el resto
+          return (
+            <Stack direction="row" spacing={1}>
+              <Tooltip title="Editar">
+                <IconButton size="small" onClick={() => onEdit?.(params.row)}>
+                  <EditRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Eliminar">
+                <IconButton size="small" onClick={() => onDelete?.(params.row)}>
+                  <DeleteOutlineRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          );
+        },
       },
     ],
-    [onEdit, onDelete, onToggleEnabled]
+    [navigate, onEdit, onDelete, onToggleEnabled]
   );
 
   return (
@@ -115,3 +130,5 @@ export default function ModuleTable({
     </Box>
   );
 }
+
+

@@ -99,6 +99,7 @@ erp-frontend/package.json
 erp-frontend/src/App.jsx
 erp-frontend/src/core/api/apiClient.js
 erp-frontend/src/core/components/layout/MainLayout.jsx
+erp-frontend/src/core/components/layout/ModuleShell.jsx
 erp-frontend/src/core/components/ui/KpiCard.jsx
 erp-frontend/src/core/components/ui/PageHeader.jsx
 erp-frontend/src/core/contexts/AuthContext.jsx
@@ -111,6 +112,11 @@ erp-frontend/src/modules/admin/pages/ModuleListPage.jsx
 erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx
 erp-frontend/src/modules/auth/pages/LoginPage.jsx
 erp-frontend/src/modules/dashboard/pages/Dashboard.jsx
+erp-frontend/src/modules/raffles/components/RafflesShell.jsx
+erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx
+erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx
+erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx
+erp-frontend/src/modules/raffles/styles/raffles.css
 erp-frontend/src/routes/index.jsx
 erp-frontend/src/routes/ProtectedRoute.jsx
 erp-frontend/src/theme/index.js
@@ -121,266 +127,296 @@ erp-frontend/vite.config.js
 <files>
 This section contains the contents of the repository's files.
 
-<file path="erp-frontend/src/modules/admin/components/ModuleTable.jsx">
-// PATH: erp-frontend/src/modules/admin/components/ModuleTable.jsx
+<file path="erp-frontend/src/core/components/layout/ModuleShell.jsx">
+// PATH: erp-frontend/src/core/components/layout/ModuleShell.jsx
 import * as React from 'react';
-import { Box, Chip, Stack, Tooltip, Switch, Button } from '@mui/material';
 import {
-  DataGrid,
-  GridActionsCellItem,
-  GridToolbarContainer,
-  GridToolbarQuickFilter,
-} from '@mui/x-data-grid';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
+  AppBar,
+  Avatar,
+  Badge,
+  Box,
+  CssBaseline,
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
+import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'; // fallback
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useThemeMode } from '../../contexts/ThemeModeContext';
+import AuthContext from '../../contexts/AuthContext';
 
-/** Toolbar dentro del contexto del DataGrid */
-function ModulesToolbar({ onAdd }) {
-  return (
-    <GridToolbarContainer sx={{ px: 1, py: 0.5, display: 'flex', gap: 1, justifyContent: 'space-between' }}>
-      <GridToolbarQuickFilter
-        quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)}
-      />
-      <Tooltip title="Nuevo módulo">
-        <span>
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => onAdd?.()}>
-            Nuevo módulo
-          </Button>
-        </span>
-      </Tooltip>
-    </GridToolbarContainer>
-  );
-}
+const drawerWidth = 260;
 
 /**
- * Tabla reutilizable para Módulos.
- * - Tolera rows undefined (usa [] por defecto).
- * - Callbacks: Add/Edit/Delete/Toggle.
+ * Shell genérico de módulo:
+ * - header fijo sobre el Drawer (z-index corregido).
+ * - sidebar mini-variant colapsable sin bordes redondeados.
+ * - items: [{ id, label, path, icon (Componente|string), exact? }]
  */
-export default function ModuleTable({
-  rows = [],
-  onAdd,
-  onEdit,
-  onDelete,
-  onToggleEnabled,
-}) {
-  const columns = React.useMemo(
-    () => [
-      { field: 'name', headerName: 'Módulo', flex: 1, minWidth: 220 },
-      {
-        field: 'key',
-        headerName: 'Clave',
-        width: 180,
-        valueFormatter: (v) => v?.value ?? '—',
-      },
-      {
-        field: 'enabled',
-        headerName: 'Estado',
-        width: 180,
-        sortable: false,
-        renderCell: (params) => {
-          const enabled = Boolean(params.value);
-          return (
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Switch
-                checked={enabled}
-                onChange={() => onToggleEnabled?.(params.row)}
-                inputProps={{ 'aria-label': 'Cambiar estado' }}
-              />
-              <Chip
-                size="small"
-                color={enabled ? 'success' : 'default'}
-                label={enabled ? 'Activo' : 'Inactivo'}
-              />
-            </Stack>
-          );
-        },
-      },
-      {
-        field: 'actions',
-        type: 'actions',
-        headerName: 'Acciones',
-        width: 120,
-        getActions: (params) => [
-          <GridActionsCellItem
-            key="edit"
-            icon={<EditRoundedIcon />}
-            label="Editar"
-            onClick={() => onEdit?.(params.row)}
-          />,
-          <GridActionsCellItem
-            key="delete"
-            icon={<DeleteOutlineRoundedIcon />}
-            label="Eliminar"
-            onClick={() => onDelete?.(params.row)}
-          />,
-        ],
-      },
-    ],
-    [onEdit, onDelete, onToggleEnabled]
-  );
+export default function ModuleShell({ title = 'ELIANA ERP', items = [] }) {
+  const [open, setOpen] = React.useState(true);
+  const { mode, toggleMode } = useThemeMode();
+  const { user } = React.useContext(AuthContext) || {};
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
-    <Box sx={{ height: 560, width: '100%' }}>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        getRowId={(r) => r.id}
-        disableRowSelectionOnClick
-        pageSizeOptions={[5, 10, 25]}
-        initialState={{
-          pagination: { paginationModel: { pageSize: 10 } },
+    <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
+      <CssBaseline />
+
+      <AppBar
+        position="fixed"
+        color="default"
+        elevation={0}
+        sx={{
+          zIndex: (t) => t.zIndex.drawer + 1,                         // 👈 header sobre el drawer
+          borderBottom: (t) => `1px solid ${t.palette.divider}`,
+          bgcolor: (t) =>
+            t.palette.mode === 'light' ? t.palette.background.paper : t.palette.background.default,
         }}
-        slots={{ toolbar: ModulesToolbar }}
-        slotProps={{ toolbar: { onAdd } }}
-        sx={{ border: 'none', height: '100%' }}
-      />
+      >
+        <Toolbar sx={{ px: 2, gap: 1, color: 'text.primary' }}>
+          <IconButton edge="start" onClick={() => setOpen((v) => !v)} color="inherit" aria-label="menu">
+            {open ? <ChevronLeftRoundedIcon /> : <MenuRoundedIcon />}
+          </IconButton>
+
+          <Typography variant="h6" sx={{ ml: 1, fontWeight: 800 }}>
+            {title}
+          </Typography>
+
+          <Box sx={{ flexGrow: 1 }} />
+
+          <Tooltip title={mode === 'dark' ? 'Cambiar a claro' : 'Cambiar a oscuro'}>
+            <IconButton onClick={toggleMode} color="inherit" aria-label="toggle theme">
+              {mode === 'dark' ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Notificaciones">
+            <IconButton color="inherit">
+              <Badge variant="dot" color="primary">
+                <NotificationsNoneRoundedIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+
+          <IconButton onClick={() => navigate('/profile')} sx={{ ml: 1 }} color="inherit" aria-label="perfil">
+            <Avatar
+              sx={{
+                width: 32,
+                height: 32,
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                fontSize: 14,
+                fontWeight: 700,
+              }}
+            >
+              {user?.email?.[0]?.toUpperCase() || 'U'}
+            </Avatar>
+          </IconButton>
+        </Toolbar>
+      </AppBar>
+
+      <Drawer
+        variant="permanent"
+        PaperProps={{
+          sx: {
+            position: 'relative',
+            width: open ? drawerWidth : 72,
+            overflowX: 'hidden',
+            transition: (t) =>
+              t.transitions.create('width', {
+                easing: t.transitions.easing.sharp,
+                duration: t.transitions.duration.enteringScreen,
+              }),
+            borderRight: (t) => `1px solid ${t.palette.divider}`,
+            borderRadius: 0,
+          },
+        }}
+      >
+        {/* separador para no tapar el header */}
+        <Toolbar />
+        <Divider />
+        <List sx={{ py: 1 }}>
+          {items.map((item) => {
+            // 🔒 robustez: si alguien puso un string como icono, usamos un fallback
+            const IconComp =
+              typeof item.icon === 'function'
+                ? item.icon
+                : typeof item.icon === 'object' && item.icon
+                ? item.icon
+                : DashboardRoundedIcon;
+
+            const active = item.exact
+              ? location.pathname === item.path
+              : location.pathname.startsWith(item.path);
+
+            return (
+              <ListItemButton
+                key={item.id}
+                component={NavLink}
+                to={item.path}
+                selected={active}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(item.path);
+                }}
+                sx={{ mx: 1, my: 0.5, borderRadius: 2 }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <IconComp color={active ? 'primary' : 'inherit'} />
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{ fontWeight: active ? 700 : 500 }}
+                  sx={{ opacity: open ? 1 : 0, transition: 'opacity .2s' }}
+                />
+              </ListItemButton>
+            );
+          })}
+        </List>
+      </Drawer>
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          minWidth: 0,
+          backgroundColor: (t) =>
+            t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.background.default,
+        }}
+      >
+        <Toolbar />
+        <Box sx={{ p: 3 }}>
+          <Outlet />
+        </Box>
+      </Box>
     </Box>
   );
 }
 </file>
 
-<file path="erp-frontend/src/modules/admin/pages/ModuleListPage.jsx">
-// PATH: erp-frontend/src/modules/admin/pages/ModuleListPage.jsx
+<file path="erp-frontend/src/modules/raffles/components/RafflesShell.jsx">
+// PATH: erp-frontend/src/modules/raffles/components/RafflesShell.jsx
 import * as React from 'react';
-import {
-  Box,
-  Button,
-  Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Paper,
-  Stack,
-  TextField,
-} from '@mui/material';
-import PageHeader from '../../../core/components/ui/PageHeader';
-import ModuleTable from '../components/ModuleTable';
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import ConfirmationNumberRoundedIcon from '@mui/icons-material/ConfirmationNumberRounded';
+import ModuleShell from '../../../core/components/layout/ModuleShell';
 
-// Datos iniciales (mock) según tu lista
-const INITIAL_MODULES = [
-  { id: 'cartera', name: 'Gestión de Cartera', key: 'cartera', enabled: true },
-  { id: 'inventario', name: 'Gestión de Inventario', key: 'inventario', enabled: true },
-  { id: 'facturacion', name: 'Facturación', key: 'facturacion', enabled: true },
-  { id: 'pos', name: 'Sistema POS', key: 'pos', enabled: false },
-  { id: 'crm', name: 'CRM (Gestión de clientes)', key: 'crm', enabled: true },
-  { id: 'proveedores', name: 'Gestión de Proveedores', key: 'proveedores', enabled: false },
-  { id: 'compras', name: 'Gestión de Compras', key: 'compras', enabled: false },
-  { id: 'documental', name: 'Gestión Documental', key: 'documental', enabled: false },
-  { id: 'citas', name: 'Gestión de Citas', key: 'citas', enabled: false },
-  { id: 'proyectos', name: 'Gestión de Proyectos', key: 'proyectos', enabled: false },
-  { id: 'informes', name: 'Gestión de Informes', key: 'informes', enabled: true },
-  { id: 'contabilidad', name: 'Contabilidad', key: 'contabilidad', enabled: false },
-  { id: 'rifas', name: 'Gestión de Rifas', key: 'rifas', enabled: true },
+const items = [
+  { id: 'raffles-dashboard', label: 'Dashboard', path: '/raffles', icon: DashboardRoundedIcon, exact: true },
+  { id: 'raffles-manage',    label: 'Gestión de Rifas', path: '/raffles/raffles', icon: EmojiEventsRoundedIcon },
+  { id: 'raffles-tickets',   label: 'Gestión de Tiquetes', path: '/raffles/tickets', icon: ConfirmationNumberRoundedIcon },
 ];
 
-export default function ModuleListPage() {
-  const [rows, setRows] = React.useState(INITIAL_MODULES);
+/**
+ * Wrapper específico del módulo de Rifas que SOLAMENTE
+ * define título y opciones de menú. Header/Sidebar/Colapso
+ * se heredan de ModuleShell (no se re-implementan).
+ */
+export default function RafflesShell() {
+  return <ModuleShell title="ELIANA ERP - RAFFLES COLOMBIA" items={items} />;
+}
+</file>
 
-  // Estado del diálogo de crear/editar
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState(null);
-  const [form, setForm] = React.useState({ name: '', key: '' });
+<file path="erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx
+import * as React from 'react';
+import { Container, Paper, Typography } from '@mui/material';
+import PageHeader from '../../../core/components/ui/PageHeader';
 
-  const openCreate = () => {
-    setEditing(null);
-    setForm({ name: '', key: '' });
-    setDialogOpen(true);
-  };
-
-  const openEdit = (row) => {
-    setEditing(row);
-    setForm({ name: row.name ?? '', key: row.key ?? '' });
-    setDialogOpen(true);
-  };
-
-  const closeDialog = () => setDialogOpen(false);
-
-  const handleSave = () => {
-    const name = form.name.trim();
-    const key = form.key.trim();
-    if (!name || !key) return;
-
-    if (editing) {
-      setRows((prev) =>
-        prev.map((r) => (r.id === editing.id ? { ...r, name, key } : r))
-      );
-    } else {
-      const id = key.toLowerCase().replace(/\s+/g, '-');
-      // Evitar IDs duplicados
-      if (rows.some((r) => r.id === id)) {
-        alert('Ya existe un módulo con esa clave.');
-        return;
-      }
-      setRows((prev) => [{ id, name, key, enabled: true }, ...prev]);
-    }
-    setDialogOpen(false);
-  };
-
-  const handleDelete = (row) => {
-    if (confirm(`¿Eliminar el módulo "${row.name}"?`)) {
-      setRows((prev) => prev.filter((r) => r.id !== row.id));
-    }
-  };
-
-  const handleToggleEnabled = (row) => {
-    setRows((prev) =>
-      prev.map((r) => (r.id === row.id ? { ...r, enabled: !r.enabled } : r))
-    );
-  };
-
+export default function RaffleManagementPage() {
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <PageHeader
-        title="Módulos"
-        subtitle="Activa/inhabilita módulos del ERP y administra su catálogo"
-        breadcrumbs={[{ label: 'Inicio', href: '/' }, { label: 'Módulos' }]}
-        
+        title="Gestión de Rifas"
+        subtitle="Crea y administra rifas"
+        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Rifas' }]}
       />
-
       <Paper sx={{ p: 2 }}>
-        <ModuleTable
-          rows={rows}
-          onAdd={openCreate}
-          onEdit={openEdit}
-          onDelete={handleDelete}
-          onToggleEnabled={handleToggleEnabled}
-        />
+        <Typography variant="body1" color="text.secondary">
+          Interfaz de gestión de rifas (placeholder sin datos).
+        </Typography>
       </Paper>
-
-      <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
-        <DialogTitle>{editing ? 'Editar módulo' : 'Nuevo módulo'}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Nombre del módulo"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              autoFocus
-              required
-              fullWidth
-            />
-            <TextField
-              label="Clave (única)"
-              value={form.key}
-              onChange={(e) => setForm((f) => ({ ...f, key: e.target.value }))}
-              helperText="Se usará como identificador interno. Ej: 'inventario'"
-              required
-              fullWidth
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeDialog}>Cancelar</Button>
-          <Button variant="contained" onClick={handleSave}>
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Container>
   );
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx
+import * as React from 'react';
+import { Container, Paper, Typography } from '@mui/material';
+import PageHeader from '../../../core/components/ui/PageHeader';
+
+export default function RafflesDashboardPage() {
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Dashboard (Rifas)"
+        subtitle="Resumen del módulo de rifas"
+        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Dashboard' }]}
+      />
+      <Paper sx={{ p: 2 }}>
+        <Typography variant="body1" color="text.secondary">
+          Aquí irá el dashboard del módulo de rifas (sin datos por ahora).
+        </Typography>
+      </Paper>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx
+import * as React from 'react';
+import { Container, Paper, Typography } from '@mui/material';
+import PageHeader from '../../../core/components/ui/PageHeader';
+
+export default function TicketManagementPage() {
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Gestión de Tiquetes"
+        subtitle="Administra tiquetes del módulo de rifas"
+        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Tiquetes' }]}
+      />
+      <Paper sx={{ p: 2 }}>
+        <Typography variant="body1" color="text.secondary">
+          Interfaz de gestión de tiquetes (placeholder sin datos).
+        </Typography>
+      </Paper>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/styles/raffles.css">
+/* PATH: erp-frontend/src/modules/raffles/styles/raffles.css */
+
+/* Scope opcional para ajustes finos del módulo de Rifas */
+.raffles-scope .MuiAppBar-root {
+  /* ejemplo: una leve variación en el header si quisieras distinguir visualmente el módulo */
+  /* background-image: linear-gradient(90deg, rgba(34,197,94,.06), rgba(16,185,129,.04)); */
+}
+
+/* Puedes agregar clases utilitarias para páginas internas del módulo */
+.raffles-brand {
+  letter-spacing: .3px;
+  font-weight: 800;
 }
 </file>
 
@@ -3610,6 +3646,284 @@ export const useThemeMode = () => useContext(ThemeModeContext);
 export default ThemeModeContext;
 </file>
 
+<file path="erp-frontend/src/modules/admin/components/ModuleTable.jsx">
+// PATH: erp-frontend/src/modules/admin/components/ModuleTable.jsx
+import * as React from 'react';
+import { Box, Chip, Stack, Tooltip, Switch, Button, IconButton } from '@mui/material';
+import {
+  DataGrid,
+  GridActionsCellItem,
+  GridToolbarContainer,
+  GridToolbarQuickFilter,
+} from '@mui/x-data-grid';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
+import { useNavigate } from 'react-router-dom';
+
+/** Toolbar dentro del contexto del DataGrid */
+function ModulesToolbar({ onAdd }) {
+  return (
+    <GridToolbarContainer sx={{ px: 1, py: 0.5, display: 'flex', gap: 1, justifyContent: 'space-between' }}>
+      <GridToolbarQuickFilter quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)} />
+      <Tooltip title="Nuevo módulo">
+        <span>
+          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => onAdd?.()}>
+            Nuevo módulo
+          </Button>
+        </span>
+      </Tooltip>
+    </GridToolbarContainer>
+  );
+}
+
+/**
+ * Tabla reutilizable para Módulos.
+ * - Tolera rows undefined (usa [] por defecto).
+ * - Callbacks: Add/Edit/Delete/Toggle.
+ */
+export default function ModuleTable({
+  rows = [],
+  onAdd,
+  onEdit,
+  onDelete,
+  onToggleEnabled,
+}) {
+  const navigate = useNavigate();
+
+  const columns = React.useMemo(
+    () => [
+      { field: 'name', headerName: 'Módulo', flex: 1, minWidth: 220 },
+      {
+        field: 'key',
+        headerName: 'Clave',
+        width: 180,
+        valueFormatter: (v) => v?.value ?? '—',
+      },
+      {
+        field: 'enabled',
+        headerName: 'Estado',
+        width: 180,
+        sortable: false,
+        renderCell: (params) => {
+          const enabled = Boolean(params.value);
+          return (
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Switch
+                checked={enabled}
+                onChange={() => onToggleEnabled?.(params.row)}
+                inputProps={{ 'aria-label': 'Cambiar estado' }}
+              />
+              <Chip size="small" color={enabled ? 'success' : 'default'} label={enabled ? 'Activo' : 'Inactivo'} />
+            </Stack>
+          );
+        },
+      },
+      {
+        field: 'actions',
+        headerName: 'Acciones',
+        width: 220,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+          const isRaffles = params.row?.id === 'rifas' || params.row?.key === 'rifas';
+          if (isRaffles) {
+            return (
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<LoginRoundedIcon />}
+                onClick={() => navigate('/raffles')}
+              >
+                Ingresar
+              </Button>
+            );
+          }
+          // Acciones estándar para el resto
+          return (
+            <Stack direction="row" spacing={1}>
+              <Tooltip title="Editar">
+                <IconButton size="small" onClick={() => onEdit?.(params.row)}>
+                  <EditRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Eliminar">
+                <IconButton size="small" onClick={() => onDelete?.(params.row)}>
+                  <DeleteOutlineRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          );
+        },
+      },
+    ],
+    [navigate, onEdit, onDelete, onToggleEnabled]
+  );
+
+  return (
+    <Box sx={{ height: 560, width: '100%' }}>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        getRowId={(r) => r.id}
+        disableRowSelectionOnClick
+        pageSizeOptions={[5, 10, 25]}
+        initialState={{
+          pagination: { paginationModel: { pageSize: 10 } },
+        }}
+        slots={{ toolbar: ModulesToolbar }}
+        slotProps={{ toolbar: { onAdd } }}
+        sx={{ border: 'none', height: '100%' }}
+      />
+    </Box>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/admin/pages/ModuleListPage.jsx">
+// PATH: erp-frontend/src/modules/admin/pages/ModuleListPage.jsx
+import * as React from 'react';
+import {
+  Box,
+  Button,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  Stack,
+  TextField,
+} from '@mui/material';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import ModuleTable from '../components/ModuleTable';
+
+// Datos iniciales (mock) según tu lista
+const INITIAL_MODULES = [
+  { id: 'cartera', name: 'Gestión de Cartera', key: 'cartera', enabled: true },
+  { id: 'inventario', name: 'Gestión de Inventario', key: 'inventario', enabled: true },
+  { id: 'facturacion', name: 'Facturación', key: 'facturacion', enabled: true },
+  { id: 'pos', name: 'Sistema POS', key: 'pos', enabled: false },
+  { id: 'crm', name: 'CRM (Gestión de clientes)', key: 'crm', enabled: true },
+  { id: 'proveedores', name: 'Gestión de Proveedores', key: 'proveedores', enabled: false },
+  { id: 'compras', name: 'Gestión de Compras', key: 'compras', enabled: false },
+  { id: 'documental', name: 'Gestión Documental', key: 'documental', enabled: false },
+  { id: 'citas', name: 'Gestión de Citas', key: 'citas', enabled: false },
+  { id: 'proyectos', name: 'Gestión de Proyectos', key: 'proyectos', enabled: false },
+  { id: 'informes', name: 'Gestión de Informes', key: 'informes', enabled: true },
+  { id: 'contabilidad', name: 'Contabilidad', key: 'contabilidad', enabled: false },
+  { id: 'rifas', name: 'Gestión de Rifas', key: 'rifas', enabled: true },
+];
+
+export default function ModuleListPage() {
+  const [rows, setRows] = React.useState(INITIAL_MODULES);
+
+  // Estado del diálogo de crear/editar
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [editing, setEditing] = React.useState(null);
+  const [form, setForm] = React.useState({ name: '', key: '' });
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ name: '', key: '' });
+    setDialogOpen(true);
+  };
+
+  const openEdit = (row) => {
+    setEditing(row);
+    setForm({ name: row.name ?? '', key: row.key ?? '' });
+    setDialogOpen(true);
+  };
+
+  const closeDialog = () => setDialogOpen(false);
+
+  const handleSave = () => {
+    const name = form.name.trim();
+    const key = form.key.trim();
+    if (!name || !key) return;
+
+    if (editing) {
+      setRows((prev) =>
+        prev.map((r) => (r.id === editing.id ? { ...r, name, key } : r))
+      );
+    } else {
+      const id = key.toLowerCase().replace(/\s+/g, '-');
+      // Evitar IDs duplicados
+      if (rows.some((r) => r.id === id)) {
+        alert('Ya existe un módulo con esa clave.');
+        return;
+      }
+      setRows((prev) => [{ id, name, key, enabled: true }, ...prev]);
+    }
+    setDialogOpen(false);
+  };
+
+  const handleDelete = (row) => {
+    if (confirm(`¿Eliminar el módulo "${row.name}"?`)) {
+      setRows((prev) => prev.filter((r) => r.id !== row.id));
+    }
+  };
+
+  const handleToggleEnabled = (row) => {
+    setRows((prev) =>
+      prev.map((r) => (r.id === row.id ? { ...r, enabled: !r.enabled } : r))
+    );
+  };
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Módulos"
+        subtitle="Activa/inhabilita módulos del ERP y administra su catálogo"
+        breadcrumbs={[{ label: 'Inicio', href: '/' }, { label: 'Módulos' }]}
+        
+      />
+
+      <Paper sx={{ p: 2 }}>
+        <ModuleTable
+          rows={rows}
+          onAdd={openCreate}
+          onEdit={openEdit}
+          onDelete={handleDelete}
+          onToggleEnabled={handleToggleEnabled}
+        />
+      </Paper>
+
+      <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
+        <DialogTitle>{editing ? 'Editar módulo' : 'Nuevo módulo'}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Nombre del módulo"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              autoFocus
+              required
+              fullWidth
+            />
+            <TextField
+              label="Clave (única)"
+              value={form.key}
+              onChange={(e) => setForm((f) => ({ ...f, key: e.target.value }))}
+              helperText="Se usará como identificador interno. Ej: 'inventario'"
+              required
+              fullWidth
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDialog}>Cancelar</Button>
+          <Button variant="contained" onClick={handleSave}>
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
+  );
+}
+</file>
+
 <file path="erp-frontend/vite.config.js">
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -3715,134 +4029,6 @@ export const useAuth = () => useContext(AuthContext);
 export default AuthContext;
 </file>
 
-<file path="erp-frontend/src/core/navigation/menuConfig.js">
-// PATH: erp-frontend/src/core/navigation/menuConfig.js
-// Menú lateral basado en roles. Añadimos "Módulos".
-
-export const ROLES = {
-  ADMIN: 'admin',
-  MANAGER: 'manager',
-  USER: 'user',
-};
-
-export const menuItems = [
-  {
-    id: 'subscribers',
-    label: 'Subscribers',
-    icon: 'PeopleAltRounded',
-    path: '/subscribers',
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
-  },
-  {
-    id: 'modules',
-    label: 'Módulos',
-    icon: 'ViewModuleRounded',
-    path: '/modules',
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
-  },
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    icon: 'DashboardRounded',
-    path: '/dashboard',
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.USER],
-  },
-];
-
-// Helper para filtrar por rol
-export function getMenuForRole(role = ROLES.USER) {
-  return menuItems.filter(
-    (item) => !item.allowedRoles || item.allowedRoles.includes(role)
-  );
-}
-
-// Export alias para mantener compatibilidad con importaciones existentes
-export const menuConfig = menuItems;
-
-export default menuItems;
-</file>
-
-<file path="erp-frontend/src/modules/admin/components/SubscriberTable.jsx">
-// PATH: erp-frontend/src/modules/admin/components/SubscriberTable.jsx
-import * as React from 'react';
-import { Box, Button } from '@mui/material';
-import {
-  DataGrid,
-  GridActionsCellItem,
-  GridToolbarContainer,
-  GridToolbarQuickFilter,
-} from '@mui/x-data-grid';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-
-/** Toolbar dentro del contexto del DataGrid */
-function SubscribersToolbar({ onAdd }) {
-  return (
-    <GridToolbarContainer sx={{ px: 1, py: 0.5, display: 'flex', gap: 1, justifyContent: 'space-between' }}>
-      <GridToolbarQuickFilter
-        quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)}
-      />
-      <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => onAdd?.()}>
-        Nuevo suscriptor
-      </Button>
-    </GridToolbarContainer>
-  );
-}
-
-export default function SubscriberTable({ rows, data, onAdd, onEdit, onDelete }) {
-  const safeRows = React.useMemo(() => {
-    if (Array.isArray(rows)) return rows;
-    if (Array.isArray(data)) return data;
-    return [];
-  }, [rows, data]);
-
-  const columns = React.useMemo(() => [
-    { field: 'name', headerName: 'Nombre', flex: 1, minWidth: 180 },
-    { field: 'email', headerName: 'Correo', flex: 1, minWidth: 220 },
-    { field: 'plan', headerName: 'Plan', width: 140, valueGetter: (v, r) => r?.plan ?? '—' },
-    { field: 'status', headerName: 'Estado', width: 140, valueGetter: (v, r) => r?.status ?? '—' },
-    {
-      field: 'actions',
-      type: 'actions',
-      headerName: 'Acciones',
-      width: 120,
-      getActions: (params) => [
-        <GridActionsCellItem
-          key="edit"
-          icon={<EditRoundedIcon />}
-          label="Editar"
-          onClick={() => onEdit?.(params.row)}
-        />,
-        <GridActionsCellItem
-          key="delete"
-          icon={<DeleteOutlineRoundedIcon />}
-          label="Eliminar"
-          onClick={() => onDelete?.(params.row)}
-        />,
-      ],
-    },
-  ], [onEdit, onDelete]);
-
-  return (
-    <Box sx={{ width: '100%' }}>
-      <DataGrid
-        rows={safeRows}
-        getRowId={(r) => r.id ?? r._id ?? `${r.email}-${r.name}`}
-        columns={columns}
-        disableRowSelectionOnClick
-        density="comfortable"
-        pageSizeOptions={[5, 10]}
-        initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
-        slots={{ toolbar: SubscribersToolbar }}
-        slotProps={{ toolbar: { onAdd } }}
-        sx={{ border: 'none', height: 520 }}
-      />
-    </Box>
-  );
-}
-</file>
-
 <file path="erp-frontend/src/modules/dashboard/pages/Dashboard.jsx">
 // PATH: erp-frontend/src/modules/dashboard/pages/Dashboard.jsx
 import * as React from 'react';
@@ -3940,35 +4126,6 @@ export default function Dashboard() {
         </Grid>
       </Grid>
     </Container>
-  );
-}
-</file>
-
-<file path="erp-frontend/src/routes/index.jsx">
-// PATH: erp-frontend/src/routes/index.jsx
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import MainLayout from '../core/components/layout/MainLayout';
-import ProtectedRoute from './ProtectedRoute';
-import LoginPage from '../modules/auth/pages/LoginPage';
-import Dashboard from '../modules/dashboard/pages/Dashboard';
-import SubscriberListPage from '../modules/admin/pages/SubscriberListPage';
-import ModuleListPage from '../modules/admin/pages/ModuleListPage';
-
-export default function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route element={<ProtectedRoute />}>
-        <Route element={<MainLayout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/subscribers" element={<SubscriberListPage />} />
-          <Route path="/modules" element={<ModuleListPage />} />
-        </Route>
-      </Route>
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
   );
 }
 </file>
@@ -4198,184 +4355,57 @@ export function getAppTheme(mode = 'dark') {
 }
 </file>
 
-<file path="erp-frontend/src/core/components/layout/MainLayout.jsx">
-// PATH: erp-frontend/src/core/components/layout/MainLayout.jsx
-import * as React from 'react';
-import {
-  AppBar as MuiAppBar,
-  Avatar,
-  Badge,
-  Box,
-  Divider,
-  Drawer as MuiDrawer,
-  IconButton,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Toolbar,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
-import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
-import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+<file path="erp-frontend/src/core/navigation/menuConfig.js">
+// PATH: erp-frontend/src/core/navigation/menuConfig.js
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
+import ViewModuleRoundedIcon from '@mui/icons-material/ViewModuleRounded';
 
-import AuthContext from '../../contexts/AuthContext';
-import { getMenuForRole } from '../../navigation/menuConfig';
-import { useThemeMode } from '../../contexts/ThemeModeContext';
+export const ROLES = {
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  USER: 'user',
+};
 
-const DRAWER_WIDTH = 260;
-const COLLAPSED_WIDTH = 80;
+/**
+ * Menú del ADMIN (layout principal).
+ * IMPORTANTE: `icon` DEBE ser un componente React (no un string).
+ */
+export const menuItems = [
+  {
+    id: 'subscribers',
+    label: 'Suscriptores',
+    path: '/subscribers',
+    icon: PeopleAltRoundedIcon,           // ✅ componente
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
+  },
+  {
+    id: 'modules',
+    label: 'Módulos',
+    path: '/modules',
+    icon: ViewModuleRoundedIcon,          // ✅ componente
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
+  },
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    path: '/dashboard',
+    icon: DashboardRoundedIcon,           // ✅ componente
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.USER],
+  },
+];
 
-// AppBar sin bordes redondeados; el color se controla por theme
-const AppBar = styled(MuiAppBar)(({ theme }) => ({
-  zIndex: theme.zIndex.drawer + 1,
-}));
-
-// Drawer mini-variant SIN bordes redondeados
-const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
-  ({ theme, open }) => ({
-    width: open ? DRAWER_WIDTH : COLLAPSED_WIDTH,
-    flexShrink: 0,
-    whiteSpace: 'nowrap',
-    boxSizing: 'border-box',
-    '& .MuiDrawer-paper': {
-      borderRadius: 0, // sin bordes redondeados
-      width: open ? DRAWER_WIDTH : COLLAPSED_WIDTH,
-      backgroundColor: theme.palette.background.paper,
-      borderRight: `1px solid ${theme.palette.divider}`,
-      transition: 'width 220ms ease',
-      overflowX: 'hidden',
-    },
-  })
-);
-
-function NavItem({ to, icon: Icon, label, collapsed }) {
-  const location = useLocation();
-  const active = location.pathname === to;
-  return (
-    <Tooltip title={collapsed ? label : ''} placement="right">
-      <ListItemButton
-        component={NavLink}
-        to={to}
-        selected={active}
-        sx={{
-          mx: 1,
-          borderRadius: 2,
-          '&.Mui-selected': {
-            backgroundColor: 'rgba(34,197,94,0.18)',
-          },
-        }}
-      >
-        <ListItemIcon sx={{ minWidth: 36, color: active ? 'primary.main' : 'text.secondary' }}>
-          <Icon />
-        </ListItemIcon>
-        {!collapsed && <ListItemText primary={label} />}
-      </ListItemButton>
-    </Tooltip>
+export function getMenuForRole(role = ROLES.USER) {
+  return menuItems.filter(
+    (item) => !item.allowedRoles || item.allowedRoles.includes(role)
   );
 }
 
-export default function MainLayout() {
-  const [open, setOpen] = React.useState(true);
-  const { mode, toggleMode } = useThemeMode();
-  const { user } = React.useContext(AuthContext) || {};
-  const navigate = useNavigate();
-  const collapsed = !open;
+// Alias de compatibilidad si en alguna parte se importa { menuConfig }
+export const menuConfig = menuItems;
 
-  const menu = React.useMemo(() => getMenuForRole(user?.role || 'admin'), [user]);
-
-  return (
-    <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
-      {/* AppBar: color default -> usa text.primary del theme (no queda blanco en light) */}
-      <AppBar position="fixed" color="default" elevation={0} sx={{ borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
-        <Toolbar sx={{ gap: 1, color: 'text.primary' }}>
-          <IconButton
-            edge="start"
-            onClick={() => setOpen((v) => !v)}
-            color="inherit"
-            sx={{ mr: 1 }}
-            aria-label="toggle sidebar"
-          >
-            {open ? <ChevronLeftRoundedIcon /> : <MenuRoundedIcon />}
-          </IconButton>
-
-          <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 0.2 }}>
-            ELIANA ERP
-          </Typography>
-
-          <Box sx={{ flex: 1 }} />
-
-          {/* Theme toggle */}
-          <Tooltip title={mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>
-            <IconButton color="inherit" onClick={toggleMode} aria-label="toggle theme">
-              {mode === 'dark' ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
-            </IconButton>
-          </Tooltip>
-
-          {/* Notificaciones */}
-          <IconButton color="inherit" aria-label="notifications" sx={{ ml: 1 }}>
-            <Badge variant="dot" color="primary">
-              <NotificationsNoneRoundedIcon />
-            </Badge>
-          </IconButton>
-
-          {/* Perfil */}
-          <IconButton onClick={() => navigate('/profile')} sx={{ ml: 1 }} color="inherit" aria-label="perfil">
-            <Avatar
-              alt="Usuario"
-              sx={{
-                width: 32,
-                height: 32,
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
-                fontSize: 14,
-                fontWeight: 700,
-              }}
-            >
-              {user?.email?.[0]?.toUpperCase() || 'U'}
-            </Avatar>
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-
-      {/* Sidebar */}
-      <Drawer variant="permanent" open={open}>
-        <Toolbar />
-        <Divider />
-        <List sx={{ mt: 1 }}>
-          {menu.map((item) => (
-            <NavItem
-              key={item.id}
-              to={item.path}
-              icon={item.icon}
-              label={item.label}
-              collapsed={collapsed}
-            />
-          ))}
-        </List>
-      </Drawer>
-
-      {/* Contenido */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          minWidth: 0,
-          p: 3,
-        }}
-      >
-        <Toolbar /> {/* offset del AppBar */}
-        <Outlet />
-      </Box>
-    </Box>
-  );
-}
+// Default export opcional
+export default menuItems;
 </file>
 
 <file path="erp-frontend/src/main.jsx">
@@ -4401,56 +4431,83 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 );
 </file>
 
-<file path="erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx">
-// PATH: erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx
+<file path="erp-frontend/src/modules/admin/components/SubscriberTable.jsx">
+// PATH: erp-frontend/src/modules/admin/components/SubscriberTable.jsx
 import * as React from 'react';
-import { Container, Button } from '@mui/material';
-import PageHeader from '../../../core/components/ui/PageHeader';
-import SubscriberTable from '../components/SubscriberTable';
+import { Box, Button } from '@mui/material';
+import {
+  DataGrid,
+  GridActionsCellItem,
+  GridToolbarContainer,
+  GridToolbarQuickFilter,
+} from '@mui/x-data-grid';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 
-const seedRows = [
-  { id: 1, name: 'Empresa ABC', email: 'contacto@abc.com', plan: 'Pro', status: 'Activa' },
-  { id: 2, name: 'Juan Pérez',  email: 'juan@correo.com',   plan: 'Free', status: 'Pendiente' },
-  { id: 3, name: 'María Rojas', email: 'maria@dominio.co',  plan: 'Pro',  status: 'Suspendida' },
-];
+/** Toolbar dentro del contexto del DataGrid */
+function SubscribersToolbar({ onAdd }) {
+  return (
+    <GridToolbarContainer sx={{ px: 1, py: 0.5, display: 'flex', gap: 1, justifyContent: 'space-between' }}>
+      <GridToolbarQuickFilter
+        quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)}
+      />
+      <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => onAdd?.()}>
+        Nuevo suscriptor
+      </Button>
+    </GridToolbarContainer>
+  );
+}
 
-export default function SubscriberListPage() {
-  const [rows, setRows] = React.useState(seedRows);
+export default function SubscriberTable({ rows, data, onAdd, onEdit, onDelete }) {
+  const safeRows = React.useMemo(() => {
+    if (Array.isArray(rows)) return rows;
+    if (Array.isArray(data)) return data;
+    return [];
+  }, [rows, data]);
 
-  const handleAdd = () => {
-    // TODO: abrir modal/form real
-    const nextId = Math.max(0, ...rows.map(r => r.id)) + 1;
-    setRows((prev) => [
-      ...prev,
-      { id: nextId, name: 'Nuevo suscriptor', email: 'nuevo@demo.com', plan: 'Free', status: 'Activa' },
-    ]);
-  };
-
-  const handleEdit = (row) => {
-    // TODO: abrir modal/form edición
-    console.log('Editar', row);
-  };
-
-  const handleDelete = (row) => {
-    setRows((prev) => prev.filter((r) => r.id !== row.id));
-  };
+  const columns = React.useMemo(() => [
+    { field: 'name', headerName: 'Nombre', flex: 1, minWidth: 180 },
+    { field: 'email', headerName: 'Correo', flex: 1, minWidth: 220 },
+    { field: 'plan', headerName: 'Plan', width: 140, valueGetter: (v, r) => r?.plan ?? '—' },
+    { field: 'status', headerName: 'Estado', width: 140, valueGetter: (v, r) => r?.status ?? '—' },
+    {
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Acciones',
+      width: 120,
+      getActions: (params) => [
+        <GridActionsCellItem
+          key="edit"
+          icon={<EditRoundedIcon />}
+          label="Editar"
+          onClick={() => onEdit?.(params.row)}
+        />,
+        <GridActionsCellItem
+          key="delete"
+          icon={<DeleteOutlineRoundedIcon />}
+          label="Eliminar"
+          onClick={() => onDelete?.(params.row)}
+        />,
+      ],
+    },
+  ], [onEdit, onDelete]);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
-      <PageHeader
-        title="Suscriptores"
-        subtitle="Administra los suscriptores del ERP"
-        breadcrumbs={[{ label: 'Inicio', href: '/' }, { label: 'Suscriptores' }]}
-        
+    <Box sx={{ width: '100%' }}>
+      <DataGrid
+        rows={safeRows}
+        getRowId={(r) => r.id ?? r._id ?? `${r.email}-${r.name}`}
+        columns={columns}
+        disableRowSelectionOnClick
+        density="comfortable"
+        pageSizeOptions={[5, 10]}
+        initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
+        slots={{ toolbar: SubscribersToolbar }}
+        slotProps={{ toolbar: { onAdd } }}
+        sx={{ border: 'none', height: 520 }}
       />
-
-      <SubscriberTable
-        rows={rows}
-        onAdd={handleAdd}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-    </Container>
+    </Box>
   );
 }
 </file>
@@ -4543,6 +4600,130 @@ export default function LoginPage() {
           </Stack>
         </Box>
       </Paper>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/routes/index.jsx">
+// PATH: erp-frontend/src/routes/index.jsx
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+
+import ProtectedRoute from './ProtectedRoute';
+import MainLayout from '../core/components/layout/MainLayout';
+
+import LoginPage from '../modules/auth/pages/LoginPage';
+import Dashboard from '../modules/dashboard/pages/Dashboard';
+import SubscriberListPage from '../modules/admin/pages/SubscriberListPage';
+import ModuleListPage from '../modules/admin/pages/ModuleListPage';
+
+// Raffles (nuevo “shell” como componente en components/)
+import RafflesShell from '../modules/raffles/components/RafflesShell';
+import RafflesDashboardPage from '../modules/raffles/pages/RafflesDashboardPage';
+import RaffleManagementPage from '../modules/raffles/pages/RaffleManagementPage';
+import TicketManagementPage from '../modules/raffles/pages/TicketManagementPage';
+
+export default function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+
+      <Route element={<ProtectedRoute />}>
+        {/* ERP estándar */}
+        <Route element={<MainLayout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/subscribers" element={<SubscriberListPage />} />
+          <Route path="/modules" element={<ModuleListPage />} />
+        </Route>
+
+        {/* Módulo de Rifas: shell propio pero como componente del módulo */}
+        <Route path="/raffles" element={<RafflesShell />}>
+          <Route index element={<RafflesDashboardPage />} />
+          <Route path="raffles" element={<RaffleManagementPage />} />
+          <Route path="tickets" element={<TicketManagementPage />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/core/components/layout/MainLayout.jsx">
+// PATH: erp-frontend/src/core/components/layout/MainLayout.jsx
+import * as React from 'react';
+import { useMemo } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { getMenuForRole } from '../../navigation/menuConfig';
+import ModuleShell from './ModuleShell';
+
+/**
+ * Layout por defecto del admin.
+ * - Provee header y sidebar colapsable.
+ * - Los módulos que hereden solo cambian el título y el contenido del sidebar.
+ */
+export default function MainLayout() {
+  const { user } = useAuth();
+  const menuItems = useMemo(() => getMenuForRole(user?.role), [user?.role]);
+
+  return (
+    <ModuleShell title="ELIANA ERP - ADMIN" items={menuItems} />
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx">
+// PATH: erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx
+import * as React from 'react';
+import { Container, Button } from '@mui/material';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import SubscriberTable from '../components/SubscriberTable';
+
+const seedRows = [
+  { id: 1, name: 'Empresa ABC', email: 'contacto@abc.com', plan: 'Pro', status: 'Activa' },
+  { id: 2, name: 'Juan Pérez',  email: 'juan@correo.com',   plan: 'Free', status: 'Pendiente' },
+  { id: 3, name: 'María Rojas', email: 'maria@dominio.co',  plan: 'Pro',  status: 'Suspendida' },
+];
+
+export default function SubscriberListPage() {
+  const [rows, setRows] = React.useState(seedRows);
+
+  const handleAdd = () => {
+    // TODO: abrir modal/form real
+    const nextId = Math.max(0, ...rows.map(r => r.id)) + 1;
+    setRows((prev) => [
+      ...prev,
+      { id: nextId, name: 'Nuevo suscriptor', email: 'nuevo@demo.com', plan: 'Free', status: 'Activa' },
+    ]);
+  };
+
+  const handleEdit = (row) => {
+    // TODO: abrir modal/form edición
+    console.log('Editar', row);
+  };
+
+  const handleDelete = (row) => {
+    setRows((prev) => prev.filter((r) => r.id !== row.id));
+  };
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Suscriptores"
+        subtitle="Administra los suscriptores del ERP"
+        breadcrumbs={[{ label: 'Inicio', href: '/' }, { label: 'Suscriptores' }]}
+        
+      />
+
+      <SubscriberTable
+        rows={rows}
+        onAdd={handleAdd}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
     </Container>
   );
 }
