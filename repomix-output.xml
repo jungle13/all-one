@@ -113,10 +113,15 @@ erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx
 erp-frontend/src/modules/auth/pages/LoginPage.jsx
 erp-frontend/src/modules/dashboard/pages/Dashboard.jsx
 erp-frontend/src/modules/raffles/components/RafflesShell.jsx
+erp-frontend/src/modules/raffles/data/mock.js
+erp-frontend/src/modules/raffles/pages/RaffleDetailPage.jsx
 erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx
 erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx
+erp-frontend/src/modules/raffles/pages/SalesManagementPage.jsx
+erp-frontend/src/modules/raffles/pages/TicketDetailPage.jsx
 erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx
 erp-frontend/src/modules/raffles/styles/raffles.css
+erp-frontend/src/modules/raffles/utils/format.js
 erp-frontend/src/routes/index.jsx
 erp-frontend/src/routes/ProtectedRoute.jsx
 erp-frontend/src/theme/index.js
@@ -127,297 +132,199 @@ erp-frontend/vite.config.js
 <files>
 This section contains the contents of the repository's files.
 
-<file path="erp-frontend/src/core/components/layout/ModuleShell.jsx">
-// PATH: erp-frontend/src/core/components/layout/ModuleShell.jsx
-import * as React from 'react';
-import {
-  AppBar,
-  Avatar,
-  Badge,
-  Box,
-  CssBaseline,
-  Divider,
-  Drawer,
-  IconButton,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Toolbar,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
-import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
-import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'; // fallback
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useThemeMode } from '../../contexts/ThemeModeContext';
-import AuthContext from '../../contexts/AuthContext';
-
-const drawerWidth = 260;
-
-/**
- * Shell genérico de módulo:
- * - header fijo sobre el Drawer (z-index corregido).
- * - sidebar mini-variant colapsable sin bordes redondeados.
- * - items: [{ id, label, path, icon (Componente|string), exact? }]
- */
-export default function ModuleShell({ title = 'ELIANA ERP', items = [] }) {
-  const [open, setOpen] = React.useState(true);
-  const { mode, toggleMode } = useThemeMode();
-  const { user } = React.useContext(AuthContext) || {};
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  return (
-    <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
-      <CssBaseline />
-
-      <AppBar
-        position="fixed"
-        color="default"
-        elevation={0}
-        sx={{
-          zIndex: (t) => t.zIndex.drawer + 1,                         // 👈 header sobre el drawer
-          borderBottom: (t) => `1px solid ${t.palette.divider}`,
-          bgcolor: (t) =>
-            t.palette.mode === 'light' ? t.palette.background.paper : t.palette.background.default,
-        }}
-      >
-        <Toolbar sx={{ px: 2, gap: 1, color: 'text.primary' }}>
-          <IconButton edge="start" onClick={() => setOpen((v) => !v)} color="inherit" aria-label="menu">
-            {open ? <ChevronLeftRoundedIcon /> : <MenuRoundedIcon />}
-          </IconButton>
-
-          <Typography variant="h6" sx={{ ml: 1, fontWeight: 800 }}>
-            {title}
-          </Typography>
-
-          <Box sx={{ flexGrow: 1 }} />
-
-          <Tooltip title={mode === 'dark' ? 'Cambiar a claro' : 'Cambiar a oscuro'}>
-            <IconButton onClick={toggleMode} color="inherit" aria-label="toggle theme">
-              {mode === 'dark' ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Notificaciones">
-            <IconButton color="inherit">
-              <Badge variant="dot" color="primary">
-                <NotificationsNoneRoundedIcon />
-              </Badge>
-            </IconButton>
-          </Tooltip>
-
-          <IconButton onClick={() => navigate('/profile')} sx={{ ml: 1 }} color="inherit" aria-label="perfil">
-            <Avatar
-              sx={{
-                width: 32,
-                height: 32,
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
-                fontSize: 14,
-                fontWeight: 700,
-              }}
-            >
-              {user?.email?.[0]?.toUpperCase() || 'U'}
-            </Avatar>
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-
-      <Drawer
-        variant="permanent"
-        PaperProps={{
-          sx: {
-            position: 'relative',
-            width: open ? drawerWidth : 72,
-            overflowX: 'hidden',
-            transition: (t) =>
-              t.transitions.create('width', {
-                easing: t.transitions.easing.sharp,
-                duration: t.transitions.duration.enteringScreen,
-              }),
-            borderRight: (t) => `1px solid ${t.palette.divider}`,
-            borderRadius: 0,
-          },
-        }}
-      >
-        {/* separador para no tapar el header */}
-        <Toolbar />
-        <Divider />
-        <List sx={{ py: 1 }}>
-          {items.map((item) => {
-            // 🔒 robustez: si alguien puso un string como icono, usamos un fallback
-            const IconComp =
-              typeof item.icon === 'function'
-                ? item.icon
-                : typeof item.icon === 'object' && item.icon
-                ? item.icon
-                : DashboardRoundedIcon;
-
-            const active = item.exact
-              ? location.pathname === item.path
-              : location.pathname.startsWith(item.path);
-
-            return (
-              <ListItemButton
-                key={item.id}
-                component={NavLink}
-                to={item.path}
-                selected={active}
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(item.path);
-                }}
-                sx={{ mx: 1, my: 0.5, borderRadius: 2 }}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <IconComp color={active ? 'primary' : 'inherit'} />
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  primaryTypographyProps={{ fontWeight: active ? 700 : 500 }}
-                  sx={{ opacity: open ? 1 : 0, transition: 'opacity .2s' }}
-                />
-              </ListItemButton>
-            );
-          })}
-        </List>
-      </Drawer>
-
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          minWidth: 0,
-          backgroundColor: (t) =>
-            t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.background.default,
-        }}
-      >
-        <Toolbar />
-        <Box sx={{ p: 3 }}>
-          <Outlet />
-        </Box>
-      </Box>
-    </Box>
-  );
-}
-</file>
-
-<file path="erp-frontend/src/modules/raffles/components/RafflesShell.jsx">
-// PATH: erp-frontend/src/modules/raffles/components/RafflesShell.jsx
-import * as React from 'react';
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
-import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
-import ConfirmationNumberRoundedIcon from '@mui/icons-material/ConfirmationNumberRounded';
-import ModuleShell from '../../../core/components/layout/ModuleShell';
-
-const items = [
-  { id: 'raffles-dashboard', label: 'Dashboard', path: '/raffles', icon: DashboardRoundedIcon, exact: true },
-  { id: 'raffles-manage',    label: 'Gestión de Rifas', path: '/raffles/raffles', icon: EmojiEventsRoundedIcon },
-  { id: 'raffles-tickets',   label: 'Gestión de Tiquetes', path: '/raffles/tickets', icon: ConfirmationNumberRoundedIcon },
+<file path="erp-frontend/src/modules/raffles/data/mock.js">
+// PATH: erp-frontend/src/modules/raffles/data/mock.js
+export const mockRaffles = [
+  { id: 'r1', name: 'Rifa Moto 0KM', status: 'Activa', price: 20000, totalTickets: 5000, ticketsSold: 1320, startDate: '2025-01-01', endDate: '2025-12-31' },
+  { id: 'r2', name: 'Rifa TV 75"',   status: 'Activa', price: 15000, totalTickets: 3000, ticketsSold: 980,  startDate: '2025-02-01', endDate: '2025-10-01' },
+  { id: 'r3', name: 'Rifa Viaje Cancún', status: 'Pausada', price: 25000, totalTickets: 2000, ticketsSold: 420, startDate: '2025-03-15', endDate: '2025-09-15' },
 ];
 
-/**
- * Wrapper específico del módulo de Rifas que SOLAMENTE
- * define título y opciones de menú. Header/Sidebar/Colapso
- * se heredan de ModuleShell (no se re-implementan).
- */
-export default function RafflesShell() {
-  return <ModuleShell title="ELIANA ERP - RAFFLES COLOMBIA" items={items} />;
-}
+export const mockTickets = [
+  { id: 't-0001', number: '0001', raffleId: 'r1', buyer: 'Ana Torres',   phone: '3001112233', status: 'Pagado',    purchaseDate: '2025-04-10' },
+  { id: 't-0002', number: '0002', raffleId: 'r1', buyer: 'Luis Pérez',   phone: '3002223344', status: 'Pendiente', purchaseDate: '2025-04-10' },
+  { id: 't-2140', number: '2140', raffleId: 'r1', buyer: 'Carlos Díaz',  phone: '3013334455', status: 'Pagado',    purchaseDate: '2025-04-12' },
+  { id: 't-0088', number: '0088', raffleId: 'r2', buyer: 'María Rojas',  phone: '3024445566', status: 'Pagado',    purchaseDate: '2025-04-09' },
+];
+
+export const mockSales = [
+  { id: 's-01', raffleId: 'r1', amount: 20000, method: 'Efectivo', date: '2025-04-10' },
+  { id: 's-02', raffleId: 'r1', amount: 20000, method: 'Nequi',    date: '2025-04-10' },
+  { id: 's-03', raffleId: 'r2', amount: 15000, method: 'Bancolombia', date: '2025-04-09' },
+];
+
+export const mockRaffleById = (id) => mockRaffles.find(r => r.id === id);
+export const mockTicketById = (id) => mockTickets.find(t => t.id === id);
 </file>
 
-<file path="erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx">
-// PATH: erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx
+<file path="erp-frontend/src/modules/raffles/pages/RaffleDetailPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/RaffleDetailPage.jsx
 import * as React from 'react';
-import { Container, Paper, Typography } from '@mui/material';
+import { useParams } from 'react-router-dom';
+import { Container, Grid, Paper, Stack, Typography } from '@mui/material';
 import PageHeader from '../../../core/components/ui/PageHeader';
+import KpiCard from '../../../core/components/ui/KpiCard';
+import { DataGrid } from '@mui/x-data-grid';
+import { mockRaffleById, mockTickets } from '../data/mock';
 
-export default function RaffleManagementPage() {
+export default function RaffleDetailPage() {
+  const { raffleId } = useParams();
+  const raffle = mockRaffleById(raffleId);
+  const tickets = mockTickets.filter(t => t.raffleId === raffleId);
+
+  const columns = [
+    { field: 'number', headerName: 'N°', width: 100 },
+    { field: 'buyer', headerName: 'Comprador', flex: 1, minWidth: 180 },
+    { field: 'phone', headerName: 'Teléfono', width: 140 },
+    { field: 'status', headerName: 'Estado', width: 140 },
+    { field: 'purchaseDate', headerName: 'Fecha', width: 120 },
+  ];
+
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <PageHeader
-        title="Gestión de Rifas"
-        subtitle="Crea y administra rifas"
-        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Rifas' }]}
+        title={`Detalle de Rifa: ${raffle?.name ?? '—'}`}
+        subtitle="Estado y tiquetes asociados"
+        breadcrumbs={[
+          { label: 'Rifas', href: '/raffles' },
+          { label: 'Gestión de Rifas', href: '/raffles/raffles' },
+          { label: raffle?.name ?? 'Detalle' },
+        ]}
       />
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="body1" color="text.secondary">
-          Interfaz de gestión de rifas (placeholder sin datos).
-        </Typography>
+
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={3}><KpiCard label="Estado" value={raffle?.status ?? '—'} /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Precio" value={`$${(raffle?.price ?? 0).toLocaleString()}`} color="info" /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Vendidos" value={raffle?.ticketsSold ?? 0} color="success" /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Total" value={raffle?.totalTickets ?? 0} color="secondary" /></Grid>
+
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+              <Typography variant="h6">Tiquetes</Typography>
+              <Typography variant="body2" color="text.secondary">Mostrando {tickets.length} tiquetes (mock)</Typography>
+            </Stack>
+            <DataGrid
+              rows={tickets}
+              columns={columns}
+              disableRowSelectionOnClick
+              autoHeight
+              pageSizeOptions={[10]}
+              sx={{ border: 'none' }}
+            />
+          </Paper>
+        </Grid>
+      </Grid>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/pages/SalesManagementPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/SalesManagementPage.jsx
+import * as React from 'react';
+import { Container, Paper } from '@mui/material';
+import { DataGrid, GridToolbarContainer, GridToolbarQuickFilter } from '@mui/x-data-grid';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import { mockSales, mockRaffles } from '../data/mock';
+import { pesoCol } from '../utils/format';
+
+function Toolbar() {
+  return (
+    <GridToolbarContainer sx={{ px: 1, py: 0.5 }}>
+      <GridToolbarQuickFilter quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)} />
+    </GridToolbarContainer>
+  );
+}
+
+const raffleName = (id) => mockRaffles.find(r => r.id === id)?.name ?? '—';
+
+export default function SalesManagementPage() {
+  const columns = [
+    { field: 'date', headerName: 'Fecha', width: 120 },
+    { field: 'raffleId', headerName: 'Rifa', flex: 1, minWidth: 220, valueGetter: ({ value }) => raffleName(value) },
+    { field: 'method', headerName: 'Método', width: 140 },
+    { field: 'amount', headerName: 'Monto', width: 120, type: 'number',
+        valueFormatter: ({ value }) => pesoCol(value) },
+  ];
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Gestión de Ventas"
+        subtitle="Registros de ventas (mock)"
+        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Ventas' }]}
+      />
+      <Paper sx={{ p: 1 }}>
+        <DataGrid
+          rows={mockSales}
+          columns={columns}
+          getRowId={(row) => row.id}
+          autoHeight
+          disableRowSelectionOnClick
+          pageSizeOptions={[10]}
+          slots={{ toolbar: Toolbar }}
+          sx={{ border: 'none' }}
+        />
       </Paper>
     </Container>
   );
 }
 </file>
 
-<file path="erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx">
-// PATH: erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx
+<file path="erp-frontend/src/modules/raffles/pages/TicketDetailPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/TicketDetailPage.jsx
 import * as React from 'react';
-import { Container, Paper, Typography } from '@mui/material';
+import { useParams } from 'react-router-dom';
+import { Container, Paper, Stack, Typography, Divider } from '@mui/material';
 import PageHeader from '../../../core/components/ui/PageHeader';
+import { mockTicketById, mockRaffles } from '../data/mock';
 
-export default function RafflesDashboardPage() {
+export default function TicketDetailPage() {
+  const { ticketId } = useParams();
+  const t = mockTicketById(ticketId);
+  const raffleName = t ? (mockRaffles.find(r => r.id === t.raffleId)?.name ?? '—') : '—';
+
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
+    <Container maxWidth="sm" sx={{ py: 3 }}>
       <PageHeader
-        title="Dashboard (Rifas)"
-        subtitle="Resumen del módulo de rifas"
-        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Dashboard' }]}
+        title={`Tiquete #${t?.number ?? '—'}`}
+        subtitle="Detalle del tiquete"
+        breadcrumbs={[
+          { label: 'Rifas', href: '/raffles' },
+          { label: 'Gestión de Tiquetes', href: '/raffles/tickets' },
+          { label: t?.number ?? 'Detalle' },
+        ]}
       />
       <Paper sx={{ p: 2 }}>
-        <Typography variant="body1" color="text.secondary">
-          Aquí irá el dashboard del módulo de rifas (sin datos por ahora).
-        </Typography>
+        <Stack spacing={1.5}>
+          <Typography variant="body1"><strong>Rifa:</strong> {raffleName}</Typography>
+          <Typography variant="body1"><strong>Comprador:</strong> {t?.buyer ?? '—'}</Typography>
+          <Typography variant="body1"><strong>Teléfono:</strong> {t?.phone ?? '—'}</Typography>
+          <Typography variant="body1"><strong>Estado:</strong> {t?.status ?? '—'}</Typography>
+          <Typography variant="body1"><strong>Fecha compra:</strong> {t?.purchaseDate ?? '—'}</Typography>
+          <Divider />
+          <Typography variant="caption" color="text.secondary">Datos de prueba (sin backend)</Typography>
+        </Stack>
       </Paper>
     </Container>
   );
 }
 </file>
 
-<file path="erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx">
-// PATH: erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx
-import * as React from 'react';
-import { Container, Paper, Typography } from '@mui/material';
-import PageHeader from '../../../core/components/ui/PageHeader';
+<file path="erp-frontend/src/modules/raffles/utils/format.js">
+// PATH: erp-frontend/src/modules/raffles/utils/format.js
+export const pesoCol = (v) => {
+  const n = typeof v === 'number' ? v : Number(v ?? 0);
+  if (Number.isNaN(n)) return '—';
+  return `$${n.toLocaleString()}`;
+};
 
-export default function TicketManagementPage() {
-  return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
-      <PageHeader
-        title="Gestión de Tiquetes"
-        subtitle="Administra tiquetes del módulo de rifas"
-        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Tiquetes' }]}
-      />
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="body1" color="text.secondary">
-          Interfaz de gestión de tiquetes (placeholder sin datos).
-        </Typography>
-      </Paper>
-    </Container>
-  );
-}
-</file>
-
-<file path="erp-frontend/src/modules/raffles/styles/raffles.css">
-/* PATH: erp-frontend/src/modules/raffles/styles/raffles.css */
-
-/* Scope opcional para ajustes finos del módulo de Rifas */
-.raffles-scope .MuiAppBar-root {
-  /* ejemplo: una leve variación en el header si quisieras distinguir visualmente el módulo */
-  /* background-image: linear-gradient(90deg, rgba(34,197,94,.06), rgba(16,185,129,.04)); */
-}
-
-/* Puedes agregar clases utilitarias para páginas internas del módulo */
-.raffles-brand {
-  letter-spacing: .3px;
-  font-weight: 800;
-}
+export const entero = (v) => {
+  const n = typeof v === 'number' ? v : Number(v ?? 0);
+  if (Number.isNaN(n)) return '0';
+  return n.toLocaleString();
+};
 </file>
 
 <file path="erp-backend/.dockerignore">
@@ -3544,6 +3451,187 @@ apiClient.interceptors.request.use((config) => {
 export default apiClient;
 </file>
 
+<file path="erp-frontend/src/core/components/layout/ModuleShell.jsx">
+// PATH: erp-frontend/src/core/components/layout/ModuleShell.jsx
+import * as React from 'react';
+import {
+  AppBar,
+  Avatar,
+  Badge,
+  Box,
+  CssBaseline,
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
+import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded'; // fallback
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useThemeMode } from '../../contexts/ThemeModeContext';
+import AuthContext from '../../contexts/AuthContext';
+
+const drawerWidth = 260;
+
+/**
+ * Shell genérico de módulo:
+ * - header fijo sobre el Drawer (z-index corregido).
+ * - sidebar mini-variant colapsable sin bordes redondeados.
+ * - items: [{ id, label, path, icon (Componente|string), exact? }]
+ */
+export default function ModuleShell({ title = 'ELIANA ERP', items = [] }) {
+  const [open, setOpen] = React.useState(true);
+  const { mode, toggleMode } = useThemeMode();
+  const { user } = React.useContext(AuthContext) || {};
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  return (
+    <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
+      <CssBaseline />
+
+      <AppBar
+        position="fixed"
+        color="default"
+        elevation={0}
+        sx={{
+          zIndex: (t) => t.zIndex.drawer + 1,                         // 👈 header sobre el drawer
+          borderBottom: (t) => `1px solid ${t.palette.divider}`,
+          bgcolor: (t) =>
+            t.palette.mode === 'light' ? t.palette.background.paper : t.palette.background.default,
+        }}
+      >
+        <Toolbar sx={{ px: 2, gap: 1, color: 'text.primary' }}>
+          <IconButton edge="start" onClick={() => setOpen((v) => !v)} color="inherit" aria-label="menu">
+            {open ? <ChevronLeftRoundedIcon /> : <MenuRoundedIcon />}
+          </IconButton>
+
+          <Typography variant="h6" sx={{ ml: 1, fontWeight: 800 }}>
+            {title}
+          </Typography>
+
+          <Box sx={{ flexGrow: 1 }} />
+
+          <Tooltip title={mode === 'dark' ? 'Cambiar a claro' : 'Cambiar a oscuro'}>
+            <IconButton onClick={toggleMode} color="inherit" aria-label="toggle theme">
+              {mode === 'dark' ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Notificaciones">
+            <IconButton color="inherit">
+              <Badge variant="dot" color="primary">
+                <NotificationsNoneRoundedIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+
+          <IconButton onClick={() => navigate('/profile')} sx={{ ml: 1 }} color="inherit" aria-label="perfil">
+            <Avatar
+              sx={{
+                width: 32,
+                height: 32,
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                fontSize: 14,
+                fontWeight: 700,
+              }}
+            >
+              {user?.email?.[0]?.toUpperCase() || 'U'}
+            </Avatar>
+          </IconButton>
+        </Toolbar>
+      </AppBar>
+
+      <Drawer
+        variant="permanent"
+        PaperProps={{
+          sx: {
+            position: 'relative',
+            width: open ? drawerWidth : 72,
+            overflowX: 'hidden',
+            transition: (t) =>
+              t.transitions.create('width', {
+                easing: t.transitions.easing.sharp,
+                duration: t.transitions.duration.enteringScreen,
+              }),
+            borderRight: (t) => `1px solid ${t.palette.divider}`,
+            borderRadius: 0,
+          },
+        }}
+      >
+        {/* separador para no tapar el header */}
+        <Toolbar />
+        <Divider />
+        <List sx={{ py: 1 }}>
+          {items.map((item) => {
+            // 🔒 robustez: si alguien puso un string como icono, usamos un fallback
+            const IconComp =
+              typeof item.icon === 'function'
+                ? item.icon
+                : typeof item.icon === 'object' && item.icon
+                ? item.icon
+                : DashboardRoundedIcon;
+
+            const active = item.exact
+              ? location.pathname === item.path
+              : location.pathname.startsWith(item.path);
+
+            return (
+              <ListItemButton
+                key={item.id}
+                component={NavLink}
+                to={item.path}
+                selected={active}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(item.path);
+                }}
+                sx={{ mx: 1, my: 0.5, borderRadius: 2 }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <IconComp color={active ? 'primary' : 'inherit'} />
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{ fontWeight: active ? 700 : 500 }}
+                  sx={{ opacity: open ? 1 : 0, transition: 'opacity .2s' }}
+                />
+              </ListItemButton>
+            );
+          })}
+        </List>
+      </Drawer>
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          minWidth: 0,
+          backgroundColor: (t) =>
+            t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.background.default,
+        }}
+      >
+        <Toolbar />
+        <Box sx={{ p: 3 }}>
+          <Outlet />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+</file>
+
 <file path="erp-frontend/src/core/components/ui/KpiCard.jsx">
 // =============================================
 // 3) src/core/components/ui/KpiCard.jsx
@@ -3644,141 +3732,6 @@ export function ThemeModeProvider({ children }) {
 
 export const useThemeMode = () => useContext(ThemeModeContext);
 export default ThemeModeContext;
-</file>
-
-<file path="erp-frontend/src/modules/admin/components/ModuleTable.jsx">
-// PATH: erp-frontend/src/modules/admin/components/ModuleTable.jsx
-import * as React from 'react';
-import { Box, Chip, Stack, Tooltip, Switch, Button, IconButton } from '@mui/material';
-import {
-  DataGrid,
-  GridActionsCellItem,
-  GridToolbarContainer,
-  GridToolbarQuickFilter,
-} from '@mui/x-data-grid';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
-import { useNavigate } from 'react-router-dom';
-
-/** Toolbar dentro del contexto del DataGrid */
-function ModulesToolbar({ onAdd }) {
-  return (
-    <GridToolbarContainer sx={{ px: 1, py: 0.5, display: 'flex', gap: 1, justifyContent: 'space-between' }}>
-      <GridToolbarQuickFilter quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)} />
-      <Tooltip title="Nuevo módulo">
-        <span>
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => onAdd?.()}>
-            Nuevo módulo
-          </Button>
-        </span>
-      </Tooltip>
-    </GridToolbarContainer>
-  );
-}
-
-/**
- * Tabla reutilizable para Módulos.
- * - Tolera rows undefined (usa [] por defecto).
- * - Callbacks: Add/Edit/Delete/Toggle.
- */
-export default function ModuleTable({
-  rows = [],
-  onAdd,
-  onEdit,
-  onDelete,
-  onToggleEnabled,
-}) {
-  const navigate = useNavigate();
-
-  const columns = React.useMemo(
-    () => [
-      { field: 'name', headerName: 'Módulo', flex: 1, minWidth: 220 },
-      {
-        field: 'key',
-        headerName: 'Clave',
-        width: 180,
-        valueFormatter: (v) => v?.value ?? '—',
-      },
-      {
-        field: 'enabled',
-        headerName: 'Estado',
-        width: 180,
-        sortable: false,
-        renderCell: (params) => {
-          const enabled = Boolean(params.value);
-          return (
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Switch
-                checked={enabled}
-                onChange={() => onToggleEnabled?.(params.row)}
-                inputProps={{ 'aria-label': 'Cambiar estado' }}
-              />
-              <Chip size="small" color={enabled ? 'success' : 'default'} label={enabled ? 'Activo' : 'Inactivo'} />
-            </Stack>
-          );
-        },
-      },
-      {
-        field: 'actions',
-        headerName: 'Acciones',
-        width: 220,
-        sortable: false,
-        filterable: false,
-        renderCell: (params) => {
-          const isRaffles = params.row?.id === 'rifas' || params.row?.key === 'rifas';
-          if (isRaffles) {
-            return (
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<LoginRoundedIcon />}
-                onClick={() => navigate('/raffles')}
-              >
-                Ingresar
-              </Button>
-            );
-          }
-          // Acciones estándar para el resto
-          return (
-            <Stack direction="row" spacing={1}>
-              <Tooltip title="Editar">
-                <IconButton size="small" onClick={() => onEdit?.(params.row)}>
-                  <EditRoundedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Eliminar">
-                <IconButton size="small" onClick={() => onDelete?.(params.row)}>
-                  <DeleteOutlineRoundedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          );
-        },
-      },
-    ],
-    [navigate, onEdit, onDelete, onToggleEnabled]
-  );
-
-  return (
-    <Box sx={{ height: 560, width: '100%' }}>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        getRowId={(r) => r.id}
-        disableRowSelectionOnClick
-        pageSizeOptions={[5, 10, 25]}
-        initialState={{
-          pagination: { paginationModel: { pageSize: 10 } },
-        }}
-        slots={{ toolbar: ModulesToolbar }}
-        slotProps={{ toolbar: { onAdd } }}
-        sx={{ border: 'none', height: '100%' }}
-      />
-    </Box>
-  );
-}
 </file>
 
 <file path="erp-frontend/src/modules/admin/pages/ModuleListPage.jsx">
@@ -3924,6 +3877,200 @@ export default function ModuleListPage() {
 }
 </file>
 
+<file path="erp-frontend/src/modules/raffles/components/RafflesShell.jsx">
+// PATH: erp-frontend/src/modules/raffles/components/RafflesShell.jsx
+import * as React from 'react';
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import ConfirmationNumberRoundedIcon from '@mui/icons-material/ConfirmationNumberRounded';
+import ModuleShell from '../../../core/components/layout/ModuleShell';
+import MonetizationOnRoundedIcon from '@mui/icons-material/MonetizationOnRounded';
+
+const items = [
+  { id: 'raffles-dashboard', label: 'Dashboard',           path: '/raffles',            icon: DashboardRoundedIcon, exact: true },
+  { id: 'raffles-manage',    label: 'Gestión de Rifas',    path: '/raffles/raffles',    icon: EmojiEventsRoundedIcon },
+  { id: 'raffles-tickets',   label: 'Gestión de Tiquetes', path: '/raffles/tickets',    icon: ConfirmationNumberRoundedIcon },
+  // Si luego quieres exponer "Ventas" en el menú, agrega aquí:
+  { id: 'raffles-sales',     label: 'Gestión de Ventas',   path: '/raffles/sales',      icon: MonetizationOnRoundedIcon },
+];
+
+export default function RafflesShell() {
+  return <ModuleShell title="ELIANA ERP - RAFFLES COLOMBIA" items={items} />;
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx
+import * as React from 'react';
+import { Container, Paper } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import { mockRaffles } from '../data/mock';
+import { pesoCol, entero } from '../utils/format';
+
+export default function RaffleManagementPage() {
+  const columns = [
+    { field: 'name', headerName: 'Nombre', flex: 1, minWidth: 220 },
+    { field: 'status', headerName: 'Estado', width: 140 },
+    { field: 'price', headerName: 'Precio', width: 140, type: 'number',
+      valueFormatter: ({ value }) => pesoCol(value) },
+    { field: 'ticketsSold', headerName: 'Vendidos', width: 120, type: 'number',
+      valueFormatter: ({ value }) => entero(value) },
+    { field: 'totalTickets', headerName: 'Total', width: 120, type: 'number',
+      valueFormatter: ({ value }) => entero(value) },
+    { field: 'startDate', headerName: 'Inicio', width: 120 },
+    { field: 'endDate', headerName: 'Fin', width: 120 },
+  ];
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Gestión de Rifas"
+        subtitle="Crea y administra rifas"
+        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Rifas' }]}
+      />
+      <Paper sx={{ p: 1 }}>
+        <DataGrid
+          rows={mockRaffles}
+          columns={columns}
+          getRowId={(r) => r.id}
+          autoHeight
+          disableRowSelectionOnClick
+          pageSizeOptions={[10]}
+          sx={{ border: 'none' }}
+        />
+      </Paper>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx
+import * as React from 'react';
+import { Container, Grid, Paper, Stack, Button } from '@mui/material';
+import InsightsIcon from '@mui/icons-material/Insights';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import KpiCard from '../../../core/components/ui/KpiCard';
+import { mockRaffles, mockTickets } from '../data/mock';
+
+export default function RafflesDashboardPage() {
+  const totalRaffles = mockRaffles.length;
+  const activeRaffles = mockRaffles.filter(r => r.status === 'Activa').length;
+  const totalTickets = mockRaffles.reduce((a, r) => a + r.totalTickets, 0);
+  const soldTickets  = mockRaffles.reduce((a, r) => a + r.ticketsSold, 0);
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Dashboard (Rifas)"
+        subtitle="Resumen del módulo de rifas"
+        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Dashboard' }]}
+        actions={<Button variant="contained" startIcon={<InsightsIcon/>}>Nuevo reporte</Button>}
+      />
+
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={3}><KpiCard label="Rifas totales" value={totalRaffles} diff={0.6} /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Rifas activas" value={activeRaffles} diff={1.2} color="success" /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Tiquetes" value={totalTickets} diff={0.2} color="info" /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Vendidos" value={soldTickets} diff={-0.3} color="secondary" /></Grid>
+
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2 }}>
+            {/* Aquí podría ir un gráfico; evitamos issues de tamaño con placeholders por ahora */}
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <div>Actividad reciente (placeholder, sin datos todavía)</div>
+              <div>Tiquetes registrados: {mockTickets.length}</div>
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx
+import * as React from 'react';
+import { Container, Paper } from '@mui/material';
+import { DataGrid, GridToolbarContainer, GridToolbarQuickFilter, GridActionsCellItem } from '@mui/x-data-grid';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import { useNavigate } from 'react-router-dom';
+import { mockTickets, mockRaffles } from '../data/mock';
+
+function Toolbar() {
+  return (
+    <GridToolbarContainer sx={{ px: 1, py: 0.5 }}>
+      <GridToolbarQuickFilter quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)} />
+    </GridToolbarContainer>
+  );
+}
+
+const raffleName = (id) => mockRaffles.find(r => r.id === id)?.name ?? '—';
+
+export default function TicketManagementPage() {
+  const navigate = useNavigate();
+  const columns = [
+    { field: 'number', headerName: 'N°', width: 100 },
+    { field: 'raffleId', headerName: 'Rifa', flex: 1, minWidth: 200, valueGetter: ({ value }) => raffleName(value) },
+    { field: 'buyer', headerName: 'Comprador', flex: 1, minWidth: 180 },
+    { field: 'phone', headerName: 'Teléfono', width: 140 },
+    { field: 'status', headerName: 'Estado', width: 140 },
+    { field: 'purchaseDate', headerName: 'Fecha', width: 120 },
+    {
+      field: 'actions', type: 'actions', headerName: 'Acciones', width: 120,
+      getActions: (params) => [
+        <GridActionsCellItem
+          key="view"
+          icon={<VisibilityRoundedIcon />}
+          label="Ver"
+          onClick={() => navigate(`/raffles/tickets/${params.id}`)}
+        />,
+      ],
+    },
+  ];
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Gestión de Tiquetes"
+        subtitle="Administra tiquetes del módulo de rifas"
+        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Tiquetes' }]}
+      />
+      <Paper sx={{ p: 1 }}>
+        <DataGrid
+          rows={mockTickets}
+          columns={columns}
+          disableRowSelectionOnClick
+          autoHeight
+          pageSizeOptions={[10]}
+          slots={{ toolbar: Toolbar }}
+          sx={{ border: 'none' }}
+        />
+      </Paper>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/styles/raffles.css">
+/* PATH: erp-frontend/src/modules/raffles/styles/raffles.css */
+
+/* Scope opcional para ajustes finos del módulo de Rifas */
+.raffles-scope .MuiAppBar-root {
+  /* ejemplo: una leve variación en el header si quisieras distinguir visualmente el módulo */
+  /* background-image: linear-gradient(90deg, rgba(34,197,94,.06), rgba(16,185,129,.04)); */
+}
+
+/* Puedes agregar clases utilitarias para páginas internas del módulo */
+.raffles-brand {
+  letter-spacing: .3px;
+  font-weight: 800;
+}
+</file>
+
 <file path="erp-frontend/vite.config.js">
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -4027,6 +4174,141 @@ export function AuthProvider({ children }) {
 
 export const useAuth = () => useContext(AuthContext);
 export default AuthContext;
+</file>
+
+<file path="erp-frontend/src/modules/admin/components/ModuleTable.jsx">
+// PATH: erp-frontend/src/modules/admin/components/ModuleTable.jsx
+import * as React from 'react';
+import { Box, Chip, Stack, Tooltip, Switch, Button, IconButton } from '@mui/material';
+import {
+  DataGrid,
+  GridActionsCellItem,
+  GridToolbarContainer,
+  GridToolbarQuickFilter,
+} from '@mui/x-data-grid';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
+import { useNavigate } from 'react-router-dom';
+
+/** Toolbar dentro del contexto del DataGrid */
+function ModulesToolbar({ onAdd }) {
+  return (
+    <GridToolbarContainer sx={{ px: 1, py: 0.5, display: 'flex', gap: 1, justifyContent: 'space-between' }}>
+      <GridToolbarQuickFilter quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)} />
+      <Tooltip title="Nuevo módulo">
+        <span>
+          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => onAdd?.()}>
+            Nuevo módulo
+          </Button>
+        </span>
+      </Tooltip>
+    </GridToolbarContainer>
+  );
+}
+
+/**
+ * Tabla reutilizable para Módulos.
+ * - Tolera rows undefined (usa [] por defecto).
+ * - Callbacks: Add/Edit/Delete/Toggle.
+ */
+export default function ModuleTable({
+  rows = [],
+  onAdd,
+  onEdit,
+  onDelete,
+  onToggleEnabled,
+}) {
+  const navigate = useNavigate();
+
+  const columns = React.useMemo(
+    () => [
+      { field: 'name', headerName: 'Módulo', flex: 1, minWidth: 220 },
+      {
+        field: 'key',
+        headerName: 'Clave',
+        width: 180,
+        valueFormatter: (v) => v?.value ?? '—',
+      },
+      {
+        field: 'enabled',
+        headerName: 'Estado',
+        width: 180,
+        sortable: false,
+        renderCell: (params) => {
+          const enabled = Boolean(params.value);
+          return (
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Switch
+                checked={enabled}
+                onChange={() => onToggleEnabled?.(params.row)}
+                inputProps={{ 'aria-label': 'Cambiar estado' }}
+              />
+              <Chip size="small" color={enabled ? 'success' : 'default'} label={enabled ? 'Activo' : 'Inactivo'} />
+            </Stack>
+          );
+        },
+      },
+      {
+        field: 'actions',
+        headerName: 'Acciones',
+        width: 220,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+          const isRaffles = params.row?.id === 'rifas' || params.row?.key === 'rifas';
+          if (isRaffles) {
+            return (
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<LoginRoundedIcon />}
+                onClick={() => navigate('/raffles')}
+              >
+                Ingresar
+              </Button>
+            );
+          }
+          // Acciones estándar para el resto
+          return (
+            <Stack direction="row" spacing={1}>
+              <Tooltip title="Editar">
+                <IconButton size="small" onClick={() => onEdit?.(params.row)}>
+                  <EditRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Eliminar">
+                <IconButton size="small" onClick={() => onDelete?.(params.row)}>
+                  <DeleteOutlineRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          );
+        },
+      },
+    ],
+    [navigate, onEdit, onDelete, onToggleEnabled]
+  );
+
+  return (
+    <Box sx={{ height: 560, width: '100%' }}>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        getRowId={(r) => r.id}
+        disableRowSelectionOnClick
+        pageSizeOptions={[5, 10, 25]}
+        initialState={{
+          pagination: { paginationModel: { pageSize: 10 } },
+        }}
+        slots={{ toolbar: ModulesToolbar }}
+        slotProps={{ toolbar: { onAdd } }}
+        sx={{ border: 'none', height: '100%' }}
+      />
+    </Box>
+  );
+}
 </file>
 
 <file path="erp-frontend/src/modules/dashboard/pages/Dashboard.jsx">
@@ -4355,59 +4637,6 @@ export function getAppTheme(mode = 'dark') {
 }
 </file>
 
-<file path="erp-frontend/src/core/navigation/menuConfig.js">
-// PATH: erp-frontend/src/core/navigation/menuConfig.js
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
-import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
-import ViewModuleRoundedIcon from '@mui/icons-material/ViewModuleRounded';
-
-export const ROLES = {
-  ADMIN: 'admin',
-  MANAGER: 'manager',
-  USER: 'user',
-};
-
-/**
- * Menú del ADMIN (layout principal).
- * IMPORTANTE: `icon` DEBE ser un componente React (no un string).
- */
-export const menuItems = [
-  {
-    id: 'subscribers',
-    label: 'Suscriptores',
-    path: '/subscribers',
-    icon: PeopleAltRoundedIcon,           // ✅ componente
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
-  },
-  {
-    id: 'modules',
-    label: 'Módulos',
-    path: '/modules',
-    icon: ViewModuleRoundedIcon,          // ✅ componente
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
-  },
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    path: '/dashboard',
-    icon: DashboardRoundedIcon,           // ✅ componente
-    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.USER],
-  },
-];
-
-export function getMenuForRole(role = ROLES.USER) {
-  return menuItems.filter(
-    (item) => !item.allowedRoles || item.allowedRoles.includes(role)
-  );
-}
-
-// Alias de compatibilidad si en alguna parte se importa { menuConfig }
-export const menuConfig = menuItems;
-
-// Default export opcional
-export default menuItems;
-</file>
-
 <file path="erp-frontend/src/main.jsx">
 // PATH: erp-frontend/src/main.jsx
 import React from 'react';
@@ -4605,74 +4834,57 @@ export default function LoginPage() {
 }
 </file>
 
-<file path="erp-frontend/src/routes/index.jsx">
-// PATH: erp-frontend/src/routes/index.jsx
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+<file path="erp-frontend/src/core/navigation/menuConfig.js">
+// PATH: erp-frontend/src/core/navigation/menuConfig.js
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
+import ViewModuleRoundedIcon from '@mui/icons-material/ViewModuleRounded';
 
-import ProtectedRoute from './ProtectedRoute';
-import MainLayout from '../core/components/layout/MainLayout';
-
-import LoginPage from '../modules/auth/pages/LoginPage';
-import Dashboard from '../modules/dashboard/pages/Dashboard';
-import SubscriberListPage from '../modules/admin/pages/SubscriberListPage';
-import ModuleListPage from '../modules/admin/pages/ModuleListPage';
-
-// Raffles (nuevo “shell” como componente en components/)
-import RafflesShell from '../modules/raffles/components/RafflesShell';
-import RafflesDashboardPage from '../modules/raffles/pages/RafflesDashboardPage';
-import RaffleManagementPage from '../modules/raffles/pages/RaffleManagementPage';
-import TicketManagementPage from '../modules/raffles/pages/TicketManagementPage';
-
-export default function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-
-      <Route element={<ProtectedRoute />}>
-        {/* ERP estándar */}
-        <Route element={<MainLayout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/subscribers" element={<SubscriberListPage />} />
-          <Route path="/modules" element={<ModuleListPage />} />
-        </Route>
-
-        {/* Módulo de Rifas: shell propio pero como componente del módulo */}
-        <Route path="/raffles" element={<RafflesShell />}>
-          <Route index element={<RafflesDashboardPage />} />
-          <Route path="raffles" element={<RaffleManagementPage />} />
-          <Route path="tickets" element={<TicketManagementPage />} />
-        </Route>
-      </Route>
-
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
-  );
-}
-</file>
-
-<file path="erp-frontend/src/core/components/layout/MainLayout.jsx">
-// PATH: erp-frontend/src/core/components/layout/MainLayout.jsx
-import * as React from 'react';
-import { useMemo } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { getMenuForRole } from '../../navigation/menuConfig';
-import ModuleShell from './ModuleShell';
+export const ROLES = {
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  USER: 'user',
+};
 
 /**
- * Layout por defecto del admin.
- * - Provee header y sidebar colapsable.
- * - Los módulos que hereden solo cambian el título y el contenido del sidebar.
+ * Menú del ADMIN (layout principal).
+ * IMPORTANTE: `icon` DEBE ser un componente React (no un string).
  */
-export default function MainLayout() {
-  const { user } = useAuth();
-  const menuItems = useMemo(() => getMenuForRole(user?.role), [user?.role]);
+export const menuItems = [
+  {
+    id: 'subscribers',
+    label: 'Suscriptores',
+    path: '/subscribers',
+    icon: PeopleAltRoundedIcon,           // ✅ componente
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
+  },
+  {
+    id: 'modules',
+    label: 'Módulos',
+    path: '/modules',
+    icon: ViewModuleRoundedIcon,          // ✅ componente
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER],
+  },
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    path: '/dashboard',
+    icon: DashboardRoundedIcon,           // ✅ componente
+    allowedRoles: [ROLES.ADMIN, ROLES.MANAGER, ROLES.USER],
+  },
+];
 
-  return (
-    <ModuleShell title="ELIANA ERP - ADMIN" items={menuItems} />
+export function getMenuForRole(role = ROLES.USER) {
+  return menuItems.filter(
+    (item) => !item.allowedRoles || item.allowedRoles.includes(role)
   );
 }
+
+// Alias de compatibilidad si en alguna parte se importa { menuConfig }
+export const menuConfig = menuItems;
+
+// Default export opcional
+export default menuItems;
 </file>
 
 <file path="erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx">
@@ -4725,6 +4937,82 @@ export default function SubscriberListPage() {
         onDelete={handleDelete}
       />
     </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/routes/index.jsx">
+// PATH: erp-frontend/src/routes/index.jsx
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+
+import ProtectedRoute from './ProtectedRoute';
+import MainLayout from '../core/components/layout/MainLayout';
+
+import LoginPage from '../modules/auth/pages/LoginPage';
+import Dashboard from '../modules/dashboard/pages/Dashboard';
+import SubscriberListPage from '../modules/admin/pages/SubscriberListPage';
+import ModuleListPage from '../modules/admin/pages/ModuleListPage';
+
+// Raffles (nuevo “shell” como componente en components/)
+import RafflesShell from '../modules/raffles/components/RafflesShell';
+import RafflesDashboardPage from '../modules/raffles/pages/RafflesDashboardPage';
+import RaffleManagementPage from '../modules/raffles/pages/RaffleManagementPage';
+import RaffleDetailPage from '../modules/raffles/pages/RaffleDetailPage';
+import TicketManagementPage from '../modules/raffles/pages/TicketManagementPage';
+import TicketDetailPage from '../modules/raffles/pages/TicketDetailPage';
+import SalesManagementPage from '../modules/raffles/pages/SalesManagementPage';
+
+export default function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+
+      <Route element={<ProtectedRoute />}>
+        {/* ERP estándar */}
+        <Route element={<MainLayout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/subscribers" element={<SubscriberListPage />} />
+          <Route path="/modules" element={<ModuleListPage />} />
+        </Route>
+
+        {/* Módulo de Rifas: shell propio pero como componente del módulo */}
+        <Route path="/raffles" element={<RafflesShell />}>
+          <Route index element={<RafflesDashboardPage />} />
+          <Route path="raffles" element={<RaffleManagementPage />} />
+          <Route path="raffles/:raffleId" element={<RaffleDetailPage />} />
+          <Route path="tickets" element={<TicketManagementPage />} />
+          <Route path="tickets/:ticketId" element={<TicketDetailPage />} />
+          <Route path="sales" element={<SalesManagementPage />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/core/components/layout/MainLayout.jsx">
+// PATH: erp-frontend/src/core/components/layout/MainLayout.jsx
+import * as React from 'react';
+import { useMemo } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { getMenuForRole } from '../../navigation/menuConfig';
+import ModuleShell from './ModuleShell';
+
+/**
+ * Layout por defecto del admin.
+ * - Provee header y sidebar colapsable.
+ * - Los módulos que hereden solo cambian el título y el contenido del sidebar.
+ */
+export default function MainLayout() {
+  const { user } = useAuth();
+  const menuItems = useMemo(() => getMenuForRole(user?.role), [user?.role]);
+
+  return (
+    <ModuleShell title="ELIANA ERP - ADMIN" items={menuItems} />
   );
 }
 </file>

@@ -14,7 +14,10 @@ import ModuleListPage from '../modules/admin/pages/ModuleListPage';
 import RafflesShell from '../modules/raffles/components/RafflesShell';
 import RafflesDashboardPage from '../modules/raffles/pages/RafflesDashboardPage';
 import RaffleManagementPage from '../modules/raffles/pages/RaffleManagementPage';
+import RaffleDetailPage from '../modules/raffles/pages/RaffleDetailPage';
 import TicketManagementPage from '../modules/raffles/pages/TicketManagementPage';
+import TicketDetailPage from '../modules/raffles/pages/TicketDetailPage';
+import SalesManagementPage from '../modules/raffles/pages/SalesManagementPage';
 
 export default function AppRoutes() {
   return (
@@ -34,7 +37,10 @@ export default function AppRoutes() {
         <Route path="/raffles" element={<RafflesShell />}>
           <Route index element={<RafflesDashboardPage />} />
           <Route path="raffles" element={<RaffleManagementPage />} />
+          <Route path="raffles/:raffleId" element={<RaffleDetailPage />} />
           <Route path="tickets" element={<TicketManagementPage />} />
+          <Route path="tickets/:ticketId" element={<TicketDetailPage />} />
+          <Route path="sales" element={<SalesManagementPage />} />
         </Route>
       </Route>
 
