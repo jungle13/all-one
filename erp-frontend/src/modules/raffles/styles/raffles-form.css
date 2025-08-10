@@ -1,0 +1,58 @@
+/* PATH: erp-frontend/src/modules/raffles/styles/raffles-form.css */
+
+/* --- Contenedor general del formulario --- */
+.rf-form__paper {
+  padding: 24px;
+}
+
+.rf-form {
+  display: block;
+}
+
+/* --- Secciones --- */
+.rf-section {
+  /* Espacio entre secciones */
+  margin-bottom: 28px;
+}
+
+.rf-section__header {
+  margin-bottom: 6px;
+}
+
+.rf-section__title {
+  font-weight: 700;
+}
+
+.rf-section__subtitle {
+  margin-top: 2px;
+}
+
+/* Divider con más especificidad para ganar a estilos de MUI */
+.rf-section .MuiDivider-root.rf-section__divider {
+  /* Deja aire arriba y abajo del separador */
+  margin: 12px 0 20px !important;
+}
+
+/* Contenido de cada sección: añade un “colchón” superior mínimo */
+.rf-section__content {
+  display: block;
+  padding-top: 2px; /* evita que el siguiente control “toque” el divider */
+}
+
+/* --- Ajustes de layout de campos --- */
+/* Usamos el Grid de MUI con spacing en el JSX, así que aquí no forzamos CSS Grid. */
+.rf-grid__switch {
+  display: flex;
+  align-items: center;
+}
+
+/* Footer acciones */
+.rf-form__actions {
+  margin-top: 8px;
+  padding-top: 12px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+

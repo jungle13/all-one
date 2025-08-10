@@ -10,10 +10,11 @@ import Dashboard from '../modules/dashboard/pages/Dashboard';
 import SubscriberListPage from '../modules/admin/pages/SubscriberListPage';
 import ModuleListPage from '../modules/admin/pages/ModuleListPage';
 
-// Raffles (nuevo “shell” como componente en components/)
+// Raffles (módulo)
 import RafflesShell from '../modules/raffles/components/RafflesShell';
 import RafflesDashboardPage from '../modules/raffles/pages/RafflesDashboardPage';
 import RaffleManagementPage from '../modules/raffles/pages/RaffleManagementPage';
+import RaffleCreatePage from '../modules/raffles/pages/RaffleCreatePage';
 import RaffleDetailPage from '../modules/raffles/pages/RaffleDetailPage';
 import TicketManagementPage from '../modules/raffles/pages/TicketManagementPage';
 import TicketDetailPage from '../modules/raffles/pages/TicketDetailPage';
@@ -33,10 +34,11 @@ export default function AppRoutes() {
           <Route path="/modules" element={<ModuleListPage />} />
         </Route>
 
-        {/* Módulo de Rifas: shell propio pero como componente del módulo */}
+        {/* Módulo de Rifas */}
         <Route path="/raffles" element={<RafflesShell />}>
           <Route index element={<RafflesDashboardPage />} />
           <Route path="raffles" element={<RaffleManagementPage />} />
+          <Route path="raffles/new" element={<RaffleCreatePage />} />
           <Route path="raffles/:raffleId" element={<RaffleDetailPage />} />
           <Route path="tickets" element={<TicketManagementPage />} />
           <Route path="tickets/:ticketId" element={<TicketDetailPage />} />

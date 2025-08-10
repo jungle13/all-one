@@ -112,16 +112,22 @@ erp-frontend/src/modules/admin/pages/ModuleListPage.jsx
 erp-frontend/src/modules/admin/pages/SubscriberListPage.jsx
 erp-frontend/src/modules/auth/pages/LoginPage.jsx
 erp-frontend/src/modules/dashboard/pages/Dashboard.jsx
+erp-frontend/src/modules/raffles/components/forms/fields/FieldAdapters.jsx
+erp-frontend/src/modules/raffles/components/forms/FormSection.jsx
+erp-frontend/src/modules/raffles/components/forms/RaffleForm.jsx
 erp-frontend/src/modules/raffles/components/RafflesShell.jsx
 erp-frontend/src/modules/raffles/data/mock.js
+erp-frontend/src/modules/raffles/pages/RaffleCreatePage.jsx
 erp-frontend/src/modules/raffles/pages/RaffleDetailPage.jsx
 erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx
 erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx
 erp-frontend/src/modules/raffles/pages/SalesManagementPage.jsx
 erp-frontend/src/modules/raffles/pages/TicketDetailPage.jsx
 erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx
+erp-frontend/src/modules/raffles/styles/raffles-form.css
 erp-frontend/src/modules/raffles/styles/raffles.css
 erp-frontend/src/modules/raffles/utils/format.js
+erp-frontend/src/modules/raffles/utils/validation.js
 erp-frontend/src/routes/index.jsx
 erp-frontend/src/routes/ProtectedRoute.jsx
 erp-frontend/src/theme/index.js
@@ -132,198 +138,487 @@ erp-frontend/vite.config.js
 <files>
 This section contains the contents of the repository's files.
 
-<file path="erp-frontend/src/modules/raffles/data/mock.js">
-// PATH: erp-frontend/src/modules/raffles/data/mock.js
-export const mockRaffles = [
-  { id: 'r1', name: 'Rifa Moto 0KM', status: 'Activa', price: 20000, totalTickets: 5000, ticketsSold: 1320, startDate: '2025-01-01', endDate: '2025-12-31' },
-  { id: 'r2', name: 'Rifa TV 75"',   status: 'Activa', price: 15000, totalTickets: 3000, ticketsSold: 980,  startDate: '2025-02-01', endDate: '2025-10-01' },
-  { id: 'r3', name: 'Rifa Viaje Cancún', status: 'Pausada', price: 25000, totalTickets: 2000, ticketsSold: 420, startDate: '2025-03-15', endDate: '2025-09-15' },
-];
+<file path="erp-frontend/src/modules/raffles/components/forms/fields/FieldAdapters.jsx">
+// PATH: erp-frontend/src/modules/raffles/components/forms/fields/FieldAdapters.jsx
+import * as React from 'react';
+import { Field } from 'react-final-form';
+import { TextField, MenuItem, FormControlLabel, Switch } from '@mui/material';
 
-export const mockTickets = [
-  { id: 't-0001', number: '0001', raffleId: 'r1', buyer: 'Ana Torres',   phone: '3001112233', status: 'Pagado',    purchaseDate: '2025-04-10' },
-  { id: 't-0002', number: '0002', raffleId: 'r1', buyer: 'Luis Pérez',   phone: '3002223344', status: 'Pendiente', purchaseDate: '2025-04-10' },
-  { id: 't-2140', number: '2140', raffleId: 'r1', buyer: 'Carlos Díaz',  phone: '3013334455', status: 'Pagado',    purchaseDate: '2025-04-12' },
-  { id: 't-0088', number: '0088', raffleId: 'r2', buyer: 'María Rojas',  phone: '3024445566', status: 'Pagado',    purchaseDate: '2025-04-09' },
-];
+/**
+ * TextField adaptable (input y select)
+ * - Acepta `validate`, `parse`, `format` para Final Form (se pasan a <Field/>)
+ * - NO pasa `validate` a MUI TextField (evita warning de prop inválida)
+ */
+export function FFTextField({
+  name,
+  label,
+  type = 'text',
+  parse,
+  format,
+  validate,        // <<—— la tomamos aquí
+  required,
+  select = false,
+  children,
+  ...rest          // <<—— aquí ya NO viene `validate`
+}) {
+  return (
+    <Field name={name} parse={parse} format={format} validate={validate}>
+      {({ input, meta }) => (
+        <TextField
+          {...input}
+          label={label}
+          type={type}
+          required={required}
+          select={select}
+          error={meta.touched && !!meta.error}
+          helperText={meta.touched && meta.error ? meta.error : ' '}
+          fullWidth
+          {...rest}
+        >
+          {select ? children : null}
+        </TextField>
+      )}
+    </Field>
+  );
+}
 
-export const mockSales = [
-  { id: 's-01', raffleId: 'r1', amount: 20000, method: 'Efectivo', date: '2025-04-10' },
-  { id: 's-02', raffleId: 'r1', amount: 20000, method: 'Nequi',    date: '2025-04-10' },
-  { id: 's-03', raffleId: 'r2', amount: 15000, method: 'Bancolombia', date: '2025-04-09' },
-];
+/**
+ * Select basado en FFTextField
+ */
+export function FFSelect({ name, label, required, validate, children, ...rest }) {
+  return (
+    <FFTextField
+      name={name}
+      label={label}
+      required={required}
+      select
+      validate={validate}   // <<—— se re-envía al Field a través de FFTextField
+      {...rest}
+    >
+      {children}
+    </FFTextField>
+  );
+}
 
-export const mockRaffleById = (id) => mockRaffles.find(r => r.id === id);
-export const mockTicketById = (id) => mockTickets.find(t => t.id === id);
+/**
+ * Switch booleano
+ */
+export function FFSwitch({ name, label, validate }) {
+  return (
+    <Field
+      name={name}
+      type="checkbox"
+      parse={(v) => !!v}
+      format={(v) => !!v}
+      validate={validate}   // <<—— también soporta validación si un día la necesitas
+    >
+      {({ input }) => (
+        <FormControlLabel
+          control={
+            <Switch
+              checked={!!input.value}
+              onChange={(e, checked) => input.onChange(checked)}
+            />
+          }
+          label={label}
+        />
+      )}
+    </Field>
+  );
+}
 </file>
 
-<file path="erp-frontend/src/modules/raffles/pages/RaffleDetailPage.jsx">
-// PATH: erp-frontend/src/modules/raffles/pages/RaffleDetailPage.jsx
+<file path="erp-frontend/src/modules/raffles/components/forms/FormSection.jsx">
+// PATH: erp-frontend/src/modules/raffles/components/forms/FormSection.jsx
 import * as React from 'react';
-import { useParams } from 'react-router-dom';
-import { Container, Grid, Paper, Stack, Typography } from '@mui/material';
-import PageHeader from '../../../core/components/ui/PageHeader';
-import KpiCard from '../../../core/components/ui/KpiCard';
-import { DataGrid } from '@mui/x-data-grid';
-import { mockRaffleById, mockTickets } from '../data/mock';
+import { Stack, Typography, Divider } from '@mui/material';
 
-export default function RaffleDetailPage() {
-  const { raffleId } = useParams();
-  const raffle = mockRaffleById(raffleId);
-  const tickets = mockTickets.filter(t => t.raffleId === raffleId);
+export default function FormSection({ title, subtitle, children }) {
+  return (
+    <section className="rf-section">
+      <Stack className="rf-section__header">
+        <Typography variant="h6" className="rf-section__title">
+          {title}
+        </Typography>
+        {subtitle ? (
+          <Typography variant="body2" color="text.secondary" className="rf-section__subtitle">
+            {subtitle}
+          </Typography>
+        ) : null}
+      </Stack>
+      <Divider className="rf-section__divider" />
+      <div className="rf-section__content">{children}</div>
+    </section>
+  );
+}
+</file>
 
-  const columns = [
-    { field: 'number', headerName: 'N°', width: 100 },
-    { field: 'buyer', headerName: 'Comprador', flex: 1, minWidth: 180 },
-    { field: 'phone', headerName: 'Teléfono', width: 140 },
-    { field: 'status', headerName: 'Estado', width: 140 },
-    { field: 'purchaseDate', headerName: 'Fecha', width: 120 },
-  ];
+<file path="erp-frontend/src/modules/raffles/components/forms/RaffleForm.jsx">
+// PATH: erp-frontend/src/modules/raffles/components/forms/RaffleForm.jsx
+import * as React from 'react';
+import { Form } from 'react-final-form';
+import { Box, Paper, Grid, Button, MenuItem } from '@mui/material';
+import { FFTextField, FFSelect, FFSwitch } from './fields/FieldAdapters.jsx';
+import FormSection from './FormSection.jsx';
+import {
+  STATUS,
+  NUMBER_LENGTH,
+  composeValidators,
+  required,
+  minLength,
+  isPositiveNumber,
+  isPositiveInt,
+  oneOf,
+  dateRequired,
+  endDateGteStartDate,
+  totalTicketsByLength,
+} from './../../utils/validation';
+import './../../styles/raffles-form.css';
+
+const toNumber = (v) => (v === '' || v === undefined || v === null ? '' : Number(v));
+
+export default function RaffleForm({ initialValues, onSubmit, onCancel }) {
+  const defaults = {
+    name: '',
+    status: 'Borrador',
+    price: '',
+    totalTickets: '',
+    numberLength: 4,
+    startDate: '',
+    endDate: '',
+    prize: '',
+    description: '',
+    allowRandom: true,
+    ...initialValues,
+  };
+
+  const validateForm = (values) => {
+    const errors = {};
+    if (!STATUS.includes(values.status)) errors.status = 'Estado inválido';
+    return errors;
+  };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
+    <Paper className="rf-form__paper">
+      <Form
+        onSubmit={(vals) => {
+          const payload = {
+            ...vals,
+            price: Number(vals.price || 0),
+            totalTickets: Number(vals.totalTickets || 0),
+            numberLength: Number(vals.numberLength || 4),
+          };
+          onSubmit?.(payload);
+        }}
+        initialValues={defaults}
+        validate={validateForm}
+        subscription={{ submitting: true, pristine: true }}
+        render={({ handleSubmit, submitting, pristine }) => (
+          <Box component="form" onSubmit={handleSubmit} noValidate className="rf-form">
+            {/* Sección 1: Información básica */}
+            <FormSection title="Información básica" subtitle="Datos generales de la rifa">
+              <Grid container className="rf-grid">
+                <Grid item xs={12} md={8}>
+                  <FFTextField
+                    name="name"
+                    label="Nombre de la rifa"
+                    required
+                    autoComplete="off"
+                    validate={composeValidators(required(), minLength(3))}
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <FFSelect
+                    name="status"
+                    label="Estado"
+                    required
+                    validate={composeValidators(required(), oneOf(STATUS))}
+                  >
+                    {STATUS.map((s) => (
+                      <MenuItem key={s} value={s}>
+                        {s}
+                      </MenuItem>
+                    ))}
+                  </FFSelect>
+                </Grid>
+              </Grid>
+            </FormSection>
+
+            {/* Sección 2: Configuración de tiquetes */}
+            <FormSection
+              title="Configuración de tiquetes"
+              subtitle="Define la longitud del número y la cantidad total disponible"
+            >
+              <Grid container className="rf-grid">
+                <Grid item xs={12} md={4}>
+                  <FFSelect
+                    name="numberLength"
+                    label="Longitud de número"
+                    required
+                    parse={toNumber}
+                    validate={composeValidators(required(), oneOf(NUMBER_LENGTH))}
+                  >
+                    {NUMBER_LENGTH.map((n) => (
+                      <MenuItem key={n} value={n}>
+                        {n} dígitos
+                      </MenuItem>
+                    ))}
+                  </FFSelect>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <FFTextField
+                    name="totalTickets"
+                    label="Total de tiquetes"
+                    type="number"
+                    required
+                    inputProps={{ min: 1, step: 1 }}
+                    parse={toNumber}
+                    validate={composeValidators(isPositiveInt(), totalTicketsByLength)}
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={4} className="rf-grid__switch">
+                  <FFSwitch name="allowRandom" label="Permitir números aleatorios disponibles" />
+                </Grid>
+              </Grid>
+            </FormSection>
+
+            {/* Sección 3: Fechas y precio */}
+            <FormSection
+              title="Fechas y precio"
+              subtitle="Periodo de venta y valor por tiquete"
+            >
+              <Grid container className="rf-grid">
+                <Grid item xs={12} md={4}>
+                  <FFTextField
+                    name="price"
+                    label="Precio por tiquete (COP)"
+                    type="number"
+                    required
+                    inputProps={{ min: 0, step: 100 }}
+                    parse={toNumber}
+                    validate={composeValidators(isPositiveNumber())}
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <FFTextField
+                    name="startDate"
+                    label="Fecha de inicio"
+                    type="date"
+                    required
+                    InputLabelProps={{ shrink: true }}
+                    validate={dateRequired}
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <FFTextField
+                    name="endDate"
+                    label="Fecha de fin"
+                    type="date"
+                    required
+                    InputLabelProps={{ shrink: true }}
+                    validate={composeValidators(dateRequired, endDateGteStartDate)}
+                  />
+                </Grid>
+              </Grid>
+            </FormSection>
+
+            {/* Sección 4: Contenido */}
+            <FormSection
+              title="Contenido"
+              subtitle="Información visible para los compradores"
+            >
+              <Grid container className="rf-grid">
+                <Grid item xs={12} md={6}>
+                  <FFTextField name="prize" label="Premio principal" autoComplete="off" />
+                </Grid>
+                <Grid item xs={12} md={12}>
+                  <FFTextField name="description" label="Descripción" multiline minRows={4} />
+                </Grid>
+              </Grid>
+            </FormSection>
+
+            {/* Acciones */}
+            <div className="rf-form__actions">
+              <Button variant="outlined" onClick={() => onCancel?.()} disabled={submitting}>
+                Cancelar
+              </Button>
+              <Button type="submit" variant="contained" disabled={submitting || pristine}>
+                Guardar
+              </Button>
+            </div>
+          </Box>
+        )}
+      />
+    </Paper>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/pages/RaffleCreatePage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/RaffleCreatePage.jsx
+import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Container } from '@mui/material';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import RaffleForm from '../components/forms/RaffleForm';
+
+export default function RaffleCreatePage() {
+  const navigate = useNavigate();
+
+  const handleSubmit = (payload) => {
+    // TODO: conectar al backend cuando indiques. Por ahora mock:
+    console.log('[Nueva Rifa] listo para API:', payload);
+    navigate('/raffles/raffles');
+  };
+
+  return (
+    <Container maxWidth="md" sx={{ py: 3 }}>
       <PageHeader
-        title={`Detalle de Rifa: ${raffle?.name ?? '—'}`}
-        subtitle="Estado y tiquetes asociados"
+        title="Nueva Rifa"
+        subtitle="Completa la información para crear una rifa"
         breadcrumbs={[
           { label: 'Rifas', href: '/raffles' },
           { label: 'Gestión de Rifas', href: '/raffles/raffles' },
-          { label: raffle?.name ?? 'Detalle' },
+          { label: 'Nueva' }
         ]}
       />
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={3}><KpiCard label="Estado" value={raffle?.status ?? '—'} /></Grid>
-        <Grid item xs={12} md={3}><KpiCard label="Precio" value={`$${(raffle?.price ?? 0).toLocaleString()}`} color="info" /></Grid>
-        <Grid item xs={12} md={3}><KpiCard label="Vendidos" value={raffle?.ticketsSold ?? 0} color="success" /></Grid>
-        <Grid item xs={12} md={3}><KpiCard label="Total" value={raffle?.totalTickets ?? 0} color="secondary" /></Grid>
-
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-              <Typography variant="h6">Tiquetes</Typography>
-              <Typography variant="body2" color="text.secondary">Mostrando {tickets.length} tiquetes (mock)</Typography>
-            </Stack>
-            <DataGrid
-              rows={tickets}
-              columns={columns}
-              disableRowSelectionOnClick
-              autoHeight
-              pageSizeOptions={[10]}
-              sx={{ border: 'none' }}
-            />
-          </Paper>
-        </Grid>
-      </Grid>
+      <RaffleForm onSubmit={handleSubmit} onCancel={() => navigate('/raffles/raffles')} />
     </Container>
   );
 }
 </file>
 
-<file path="erp-frontend/src/modules/raffles/pages/SalesManagementPage.jsx">
-// PATH: erp-frontend/src/modules/raffles/pages/SalesManagementPage.jsx
-import * as React from 'react';
-import { Container, Paper } from '@mui/material';
-import { DataGrid, GridToolbarContainer, GridToolbarQuickFilter } from '@mui/x-data-grid';
-import PageHeader from '../../../core/components/ui/PageHeader';
-import { mockSales, mockRaffles } from '../data/mock';
-import { pesoCol } from '../utils/format';
+<file path="erp-frontend/src/modules/raffles/styles/raffles-form.css">
+/* PATH: erp-frontend/src/modules/raffles/styles/raffles-form.css */
 
-function Toolbar() {
-  return (
-    <GridToolbarContainer sx={{ px: 1, py: 0.5 }}>
-      <GridToolbarQuickFilter quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)} />
-    </GridToolbarContainer>
-  );
+.rf-form__paper {
+  padding: 24px;
 }
 
-const raffleName = (id) => mockRaffles.find(r => r.id === id)?.name ?? '—';
-
-export default function SalesManagementPage() {
-  const columns = [
-    { field: 'date', headerName: 'Fecha', width: 120 },
-    { field: 'raffleId', headerName: 'Rifa', flex: 1, minWidth: 220, valueGetter: ({ value }) => raffleName(value) },
-    { field: 'method', headerName: 'Método', width: 140 },
-    { field: 'amount', headerName: 'Monto', width: 120, type: 'number',
-        valueFormatter: ({ value }) => pesoCol(value) },
-  ];
-
-  return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
-      <PageHeader
-        title="Gestión de Ventas"
-        subtitle="Registros de ventas (mock)"
-        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Ventas' }]}
-      />
-      <Paper sx={{ p: 1 }}>
-        <DataGrid
-          rows={mockSales}
-          columns={columns}
-          getRowId={(row) => row.id}
-          autoHeight
-          disableRowSelectionOnClick
-          pageSizeOptions={[10]}
-          slots={{ toolbar: Toolbar }}
-          sx={{ border: 'none' }}
-        />
-      </Paper>
-    </Container>
-  );
+.rf-form {
+  display: block;
 }
-</file>
 
-<file path="erp-frontend/src/modules/raffles/pages/TicketDetailPage.jsx">
-// PATH: erp-frontend/src/modules/raffles/pages/TicketDetailPage.jsx
-import * as React from 'react';
-import { useParams } from 'react-router-dom';
-import { Container, Paper, Stack, Typography, Divider } from '@mui/material';
-import PageHeader from '../../../core/components/ui/PageHeader';
-import { mockTicketById, mockRaffles } from '../data/mock';
+/* Secciones */
+.rf-section {
+  margin-bottom: 28px;
+}
 
-export default function TicketDetailPage() {
-  const { ticketId } = useParams();
-  const t = mockTicketById(ticketId);
-  const raffleName = t ? (mockRaffles.find(r => r.id === t.raffleId)?.name ?? '—') : '—';
+.rf-section__header {
+  margin-bottom: 6px;
+}
 
-  return (
-    <Container maxWidth="sm" sx={{ py: 3 }}>
-      <PageHeader
-        title={`Tiquete #${t?.number ?? '—'}`}
-        subtitle="Detalle del tiquete"
-        breadcrumbs={[
-          { label: 'Rifas', href: '/raffles' },
-          { label: 'Gestión de Tiquetes', href: '/raffles/tickets' },
-          { label: t?.number ?? 'Detalle' },
-        ]}
-      />
-      <Paper sx={{ p: 2 }}>
-        <Stack spacing={1.5}>
-          <Typography variant="body1"><strong>Rifa:</strong> {raffleName}</Typography>
-          <Typography variant="body1"><strong>Comprador:</strong> {t?.buyer ?? '—'}</Typography>
-          <Typography variant="body1"><strong>Teléfono:</strong> {t?.phone ?? '—'}</Typography>
-          <Typography variant="body1"><strong>Estado:</strong> {t?.status ?? '—'}</Typography>
-          <Typography variant="body1"><strong>Fecha compra:</strong> {t?.purchaseDate ?? '—'}</Typography>
-          <Divider />
-          <Typography variant="caption" color="text.secondary">Datos de prueba (sin backend)</Typography>
-        </Stack>
-      </Paper>
-    </Container>
-  );
+.rf-section__title {
+  font-weight: 700;
+}
+
+.rf-section__subtitle {
+  margin-top: 2px;
+}
+
+.rf-section__divider {
+  margin: 10px 0 18px;
+}
+
+/* Contenido de cada sección */
+.rf-section__content {
+  display: block;
+}
+
+/* Grid uniforme entre campos (sin sx inline) */
+.rf-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+}
+
+/* Mapea a los breakpoints md de MUI por clase utilitaria */
+@media (min-width: 0px) {
+  .rf-grid > [class*='MuiGrid-item'] {
+    grid-column: span 12;
+  }
+}
+
+@media (min-width: 900px) {
+  /* md=4 => 4/12 columnas */
+  .rf-grid > .MuiGrid-item:nth-child(2),
+  .rf-grid > .MuiGrid-item:nth-child(3),
+  .rf-grid > .MuiGrid-item:nth-child(4) {
+    /* en secciones con 3 columnas (precio/fechas) */
+  }
+}
+
+/* Ajuste puntual: colocar el switch alineado verticalmente con sus vecinos */
+.rf-grid__switch {
+  display: flex;
+  align-items: center;
+}
+
+/* Footer acciones */
+.rf-form__actions {
+  margin-top: 8px;
+  padding-top: 12px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(0,0,0,0.08);
 }
 </file>
 
-<file path="erp-frontend/src/modules/raffles/utils/format.js">
-// PATH: erp-frontend/src/modules/raffles/utils/format.js
-export const pesoCol = (v) => {
-  const n = typeof v === 'number' ? v : Number(v ?? 0);
-  if (Number.isNaN(n)) return '—';
-  return `$${n.toLocaleString()}`;
+<file path="erp-frontend/src/modules/raffles/utils/validation.js">
+// PATH: erp-frontend/src/modules/raffles/utils/validation.js
+// Utilidades de validación para Final Form
+
+export const STATUS = ['Borrador', 'Activa', 'Pausada'];
+export const NUMBER_LENGTH = [2, 4];
+
+export const composeValidators =
+  (...validators) =>
+  (value, allValues) =>
+    validators.reduce((error, validator) => error || validator(value, allValues), undefined);
+
+// Reglas básicas
+export const required = (msg = 'Requerido') => (v) =>
+  v === undefined || v === null || v === '' ? msg : undefined;
+
+export const minLength = (n, msg = `Mínimo ${n} caracteres`) => (v) =>
+  v && String(v).trim().length < n ? msg : undefined;
+
+export const isPositiveNumber = (msg = 'Número inválido') => (v) => {
+  if (v === '' || v === undefined || v === null) return 'Requerido';
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? undefined : msg;
 };
 
-export const entero = (v) => {
-  const n = typeof v === 'number' ? v : Number(v ?? 0);
-  if (Number.isNaN(n)) return '0';
-  return n.toLocaleString();
+export const isPositiveInt = (msg = 'Entero positivo requerido') => (v) => {
+  if (v === '' || v === undefined || v === null) return 'Requerido';
+  const n = Number(v);
+  return Number.isInteger(n) && n > 0 ? undefined : msg;
+};
+
+export const oneOf = (arr, msg = 'Valor inválido') => (v) =>
+  arr.includes(v) ? undefined : msg;
+
+export const dateRequired = required('Fecha requerida');
+
+export const endDateGteStartDate = (v, all) => {
+  if (!v || !all?.startDate) return undefined;
+  return v < all.startDate ? 'Fin debe ser mayor o igual a inicio' : undefined;
+};
+
+// Regla de negocio: límite por longitud de número
+// 2 dígitos -> máx 100 (00–99), 4 dígitos -> máx 10000 (0001–9999 o 0000–9999)
+export const totalTicketsByLength = (v, all) => {
+  const len = Number(all?.numberLength);
+  const n = Number(v);
+  if (!Number.isInteger(n) || n <= 0) return 'Entero positivo requerido';
+  const max = len === 2 ? 100 : 10000;
+  return n > max ? `Para ${len} dígitos, máximo ${max} tiquetes` : undefined;
 };
 </file>
 
@@ -3877,111 +4172,86 @@ export default function ModuleListPage() {
 }
 </file>
 
-<file path="erp-frontend/src/modules/raffles/components/RafflesShell.jsx">
-// PATH: erp-frontend/src/modules/raffles/components/RafflesShell.jsx
-import * as React from 'react';
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
-import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
-import ConfirmationNumberRoundedIcon from '@mui/icons-material/ConfirmationNumberRounded';
-import ModuleShell from '../../../core/components/layout/ModuleShell';
-import MonetizationOnRoundedIcon from '@mui/icons-material/MonetizationOnRounded';
-
-const items = [
-  { id: 'raffles-dashboard', label: 'Dashboard',           path: '/raffles',            icon: DashboardRoundedIcon, exact: true },
-  { id: 'raffles-manage',    label: 'Gestión de Rifas',    path: '/raffles/raffles',    icon: EmojiEventsRoundedIcon },
-  { id: 'raffles-tickets',   label: 'Gestión de Tiquetes', path: '/raffles/tickets',    icon: ConfirmationNumberRoundedIcon },
-  // Si luego quieres exponer "Ventas" en el menú, agrega aquí:
-  { id: 'raffles-sales',     label: 'Gestión de Ventas',   path: '/raffles/sales',      icon: MonetizationOnRoundedIcon },
+<file path="erp-frontend/src/modules/raffles/data/mock.js">
+// PATH: erp-frontend/src/modules/raffles/data/mock.js
+export const mockRaffles = [
+  { id: 'r1', name: 'Rifa Moto 0KM', status: 'Activa', price: 20000, totalTickets: 5000, ticketsSold: 1320, startDate: '2025-01-01', endDate: '2025-12-31' },
+  { id: 'r2', name: 'Rifa TV 75"',   status: 'Activa', price: 15000, totalTickets: 3000, ticketsSold: 980,  startDate: '2025-02-01', endDate: '2025-10-01' },
+  { id: 'r3', name: 'Rifa Viaje Cancún', status: 'Pausada', price: 25000, totalTickets: 2000, ticketsSold: 420, startDate: '2025-03-15', endDate: '2025-09-15' },
 ];
 
-export default function RafflesShell() {
-  return <ModuleShell title="ELIANA ERP - RAFFLES COLOMBIA" items={items} />;
-}
+export const mockTickets = [
+  { id: 't-0001', number: '0001', raffleId: 'r1', buyer: 'Ana Torres',   phone: '3001112233', status: 'Pagado',    purchaseDate: '2025-04-10' },
+  { id: 't-0002', number: '0002', raffleId: 'r1', buyer: 'Luis Pérez',   phone: '3002223344', status: 'Pendiente', purchaseDate: '2025-04-10' },
+  { id: 't-2140', number: '2140', raffleId: 'r1', buyer: 'Carlos Díaz',  phone: '3013334455', status: 'Pagado',    purchaseDate: '2025-04-12' },
+  { id: 't-0088', number: '0088', raffleId: 'r2', buyer: 'María Rojas',  phone: '3024445566', status: 'Pagado',    purchaseDate: '2025-04-09' },
+];
+
+export const mockSales = [
+  { id: 's-01', raffleId: 'r1', amount: 20000, method: 'Efectivo', date: '2025-04-10' },
+  { id: 's-02', raffleId: 'r1', amount: 20000, method: 'Nequi',    date: '2025-04-10' },
+  { id: 's-03', raffleId: 'r2', amount: 15000, method: 'Bancolombia', date: '2025-04-09' },
+];
+
+export const mockRaffleById = (id) => mockRaffles.find(r => r.id === id);
+export const mockTicketById = (id) => mockTickets.find(t => t.id === id);
 </file>
 
-<file path="erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx">
-// PATH: erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx
+<file path="erp-frontend/src/modules/raffles/pages/RaffleDetailPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/RaffleDetailPage.jsx
 import * as React from 'react';
-import { Container, Paper } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { useParams } from 'react-router-dom';
+import { Container, Grid, Paper, Stack, Typography } from '@mui/material';
 import PageHeader from '../../../core/components/ui/PageHeader';
-import { mockRaffles } from '../data/mock';
-import { pesoCol, entero } from '../utils/format';
+import KpiCard from '../../../core/components/ui/KpiCard';
+import { DataGrid } from '@mui/x-data-grid';
+import { mockRaffleById, mockTickets } from '../data/mock';
 
-export default function RaffleManagementPage() {
+export default function RaffleDetailPage() {
+  const { raffleId } = useParams();
+  const raffle = mockRaffleById(raffleId);
+  const tickets = mockTickets.filter(t => t.raffleId === raffleId);
+
   const columns = [
-    { field: 'name', headerName: 'Nombre', flex: 1, minWidth: 220 },
+    { field: 'number', headerName: 'N°', width: 100 },
+    { field: 'buyer', headerName: 'Comprador', flex: 1, minWidth: 180 },
+    { field: 'phone', headerName: 'Teléfono', width: 140 },
     { field: 'status', headerName: 'Estado', width: 140 },
-    { field: 'price', headerName: 'Precio', width: 140, type: 'number',
-      valueFormatter: ({ value }) => pesoCol(value) },
-    { field: 'ticketsSold', headerName: 'Vendidos', width: 120, type: 'number',
-      valueFormatter: ({ value }) => entero(value) },
-    { field: 'totalTickets', headerName: 'Total', width: 120, type: 'number',
-      valueFormatter: ({ value }) => entero(value) },
-    { field: 'startDate', headerName: 'Inicio', width: 120 },
-    { field: 'endDate', headerName: 'Fin', width: 120 },
+    { field: 'purchaseDate', headerName: 'Fecha', width: 120 },
   ];
 
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <PageHeader
-        title="Gestión de Rifas"
-        subtitle="Crea y administra rifas"
-        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Rifas' }]}
-      />
-      <Paper sx={{ p: 1 }}>
-        <DataGrid
-          rows={mockRaffles}
-          columns={columns}
-          getRowId={(r) => r.id}
-          autoHeight
-          disableRowSelectionOnClick
-          pageSizeOptions={[10]}
-          sx={{ border: 'none' }}
-        />
-      </Paper>
-    </Container>
-  );
-}
-</file>
-
-<file path="erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx">
-// PATH: erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx
-import * as React from 'react';
-import { Container, Grid, Paper, Stack, Button } from '@mui/material';
-import InsightsIcon from '@mui/icons-material/Insights';
-import PageHeader from '../../../core/components/ui/PageHeader';
-import KpiCard from '../../../core/components/ui/KpiCard';
-import { mockRaffles, mockTickets } from '../data/mock';
-
-export default function RafflesDashboardPage() {
-  const totalRaffles = mockRaffles.length;
-  const activeRaffles = mockRaffles.filter(r => r.status === 'Activa').length;
-  const totalTickets = mockRaffles.reduce((a, r) => a + r.totalTickets, 0);
-  const soldTickets  = mockRaffles.reduce((a, r) => a + r.ticketsSold, 0);
-
-  return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
-      <PageHeader
-        title="Dashboard (Rifas)"
-        subtitle="Resumen del módulo de rifas"
-        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Dashboard' }]}
-        actions={<Button variant="contained" startIcon={<InsightsIcon/>}>Nuevo reporte</Button>}
+        title={`Detalle de Rifa: ${raffle?.name ?? '—'}`}
+        subtitle="Estado y tiquetes asociados"
+        breadcrumbs={[
+          { label: 'Rifas', href: '/raffles' },
+          { label: 'Gestión de Rifas', href: '/raffles/raffles' },
+          { label: raffle?.name ?? 'Detalle' },
+        ]}
       />
 
       <Grid container spacing={2}>
-        <Grid item xs={12} md={3}><KpiCard label="Rifas totales" value={totalRaffles} diff={0.6} /></Grid>
-        <Grid item xs={12} md={3}><KpiCard label="Rifas activas" value={activeRaffles} diff={1.2} color="success" /></Grid>
-        <Grid item xs={12} md={3}><KpiCard label="Tiquetes" value={totalTickets} diff={0.2} color="info" /></Grid>
-        <Grid item xs={12} md={3}><KpiCard label="Vendidos" value={soldTickets} diff={-0.3} color="secondary" /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Estado" value={raffle?.status ?? '—'} /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Precio" value={`$${(raffle?.price ?? 0).toLocaleString()}`} color="info" /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Vendidos" value={raffle?.ticketsSold ?? 0} color="success" /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Total" value={raffle?.totalTickets ?? 0} color="secondary" /></Grid>
 
         <Grid item xs={12}>
           <Paper sx={{ p: 2 }}>
-            {/* Aquí podría ir un gráfico; evitamos issues de tamaño con placeholders por ahora */}
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <div>Actividad reciente (placeholder, sin datos todavía)</div>
-              <div>Tiquetes registrados: {mockTickets.length}</div>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+              <Typography variant="h6">Tiquetes</Typography>
+              <Typography variant="body2" color="text.secondary">Mostrando {tickets.length} tiquetes (mock)</Typography>
             </Stack>
+            <DataGrid
+              rows={tickets}
+              columns={columns}
+              disableRowSelectionOnClick
+              autoHeight
+              pageSizeOptions={[10]}
+              sx={{ border: 'none' }}
+            />
           </Paper>
         </Grid>
       </Grid>
@@ -3990,15 +4260,14 @@ export default function RafflesDashboardPage() {
 }
 </file>
 
-<file path="erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx">
-// PATH: erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx
+<file path="erp-frontend/src/modules/raffles/pages/SalesManagementPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/SalesManagementPage.jsx
 import * as React from 'react';
 import { Container, Paper } from '@mui/material';
-import { DataGrid, GridToolbarContainer, GridToolbarQuickFilter, GridActionsCellItem } from '@mui/x-data-grid';
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import { DataGrid, GridToolbarContainer, GridToolbarQuickFilter } from '@mui/x-data-grid';
 import PageHeader from '../../../core/components/ui/PageHeader';
-import { useNavigate } from 'react-router-dom';
-import { mockTickets, mockRaffles } from '../data/mock';
+import { mockSales, mockRaffles } from '../data/mock';
+import { pesoCol } from '../utils/format';
 
 function Toolbar() {
   return (
@@ -4010,45 +4279,73 @@ function Toolbar() {
 
 const raffleName = (id) => mockRaffles.find(r => r.id === id)?.name ?? '—';
 
-export default function TicketManagementPage() {
-  const navigate = useNavigate();
+export default function SalesManagementPage() {
   const columns = [
-    { field: 'number', headerName: 'N°', width: 100 },
-    { field: 'raffleId', headerName: 'Rifa', flex: 1, minWidth: 200, valueGetter: ({ value }) => raffleName(value) },
-    { field: 'buyer', headerName: 'Comprador', flex: 1, minWidth: 180 },
-    { field: 'phone', headerName: 'Teléfono', width: 140 },
-    { field: 'status', headerName: 'Estado', width: 140 },
-    { field: 'purchaseDate', headerName: 'Fecha', width: 120 },
-    {
-      field: 'actions', type: 'actions', headerName: 'Acciones', width: 120,
-      getActions: (params) => [
-        <GridActionsCellItem
-          key="view"
-          icon={<VisibilityRoundedIcon />}
-          label="Ver"
-          onClick={() => navigate(`/raffles/tickets/${params.id}`)}
-        />,
-      ],
-    },
+    { field: 'date', headerName: 'Fecha', width: 120 },
+    { field: 'raffleId', headerName: 'Rifa', flex: 1, minWidth: 220, valueGetter: ({ value }) => raffleName(value) },
+    { field: 'method', headerName: 'Método', width: 140 },
+    { field: 'amount', headerName: 'Monto', width: 120, type: 'number',
+        valueFormatter: ({ value }) => pesoCol(value) },
   ];
 
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <PageHeader
-        title="Gestión de Tiquetes"
-        subtitle="Administra tiquetes del módulo de rifas"
-        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Tiquetes' }]}
+        title="Gestión de Ventas"
+        subtitle="Registros de ventas (mock)"
+        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Ventas' }]}
       />
       <Paper sx={{ p: 1 }}>
         <DataGrid
-          rows={mockTickets}
+          rows={mockSales}
           columns={columns}
-          disableRowSelectionOnClick
+          getRowId={(row) => row.id}
           autoHeight
+          disableRowSelectionOnClick
           pageSizeOptions={[10]}
           slots={{ toolbar: Toolbar }}
           sx={{ border: 'none' }}
         />
+      </Paper>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/pages/TicketDetailPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/TicketDetailPage.jsx
+import * as React from 'react';
+import { useParams } from 'react-router-dom';
+import { Container, Paper, Stack, Typography, Divider } from '@mui/material';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import { mockTicketById, mockRaffles } from '../data/mock';
+
+export default function TicketDetailPage() {
+  const { ticketId } = useParams();
+  const t = mockTicketById(ticketId);
+  const raffleName = t ? (mockRaffles.find(r => r.id === t.raffleId)?.name ?? '—') : '—';
+
+  return (
+    <Container maxWidth="sm" sx={{ py: 3 }}>
+      <PageHeader
+        title={`Tiquete #${t?.number ?? '—'}`}
+        subtitle="Detalle del tiquete"
+        breadcrumbs={[
+          { label: 'Rifas', href: '/raffles' },
+          { label: 'Gestión de Tiquetes', href: '/raffles/tickets' },
+          { label: t?.number ?? 'Detalle' },
+        ]}
+      />
+      <Paper sx={{ p: 2 }}>
+        <Stack spacing={1.5}>
+          <Typography variant="body1"><strong>Rifa:</strong> {raffleName}</Typography>
+          <Typography variant="body1"><strong>Comprador:</strong> {t?.buyer ?? '—'}</Typography>
+          <Typography variant="body1"><strong>Teléfono:</strong> {t?.phone ?? '—'}</Typography>
+          <Typography variant="body1"><strong>Estado:</strong> {t?.status ?? '—'}</Typography>
+          <Typography variant="body1"><strong>Fecha compra:</strong> {t?.purchaseDate ?? '—'}</Typography>
+          <Divider />
+          <Typography variant="caption" color="text.secondary">Datos de prueba (sin backend)</Typography>
+        </Stack>
       </Paper>
     </Container>
   );
@@ -4069,6 +4366,21 @@ export default function TicketManagementPage() {
   letter-spacing: .3px;
   font-weight: 800;
 }
+</file>
+
+<file path="erp-frontend/src/modules/raffles/utils/format.js">
+// PATH: erp-frontend/src/modules/raffles/utils/format.js
+export const pesoCol = (v) => {
+  const n = typeof v === 'number' ? v : Number(v ?? 0);
+  if (Number.isNaN(n)) return '—';
+  return `$${n.toLocaleString()}`;
+};
+
+export const entero = (v) => {
+  const n = typeof v === 'number' ? v : Number(v ?? 0);
+  if (Number.isNaN(n)) return '0';
+  return n.toLocaleString();
+};
 </file>
 
 <file path="erp-frontend/vite.config.js">
@@ -4407,6 +4719,209 @@ export default function Dashboard() {
           </Paper>
         </Grid>
       </Grid>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/components/RafflesShell.jsx">
+// PATH: erp-frontend/src/modules/raffles/components/RafflesShell.jsx
+import * as React from 'react';
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import ConfirmationNumberRoundedIcon from '@mui/icons-material/ConfirmationNumberRounded';
+import ModuleShell from '../../../core/components/layout/ModuleShell';
+import MonetizationOnRoundedIcon from '@mui/icons-material/MonetizationOnRounded';
+
+const items = [
+  { id: 'raffles-dashboard', label: 'Dashboard',           path: '/raffles',            icon: DashboardRoundedIcon, exact: true },
+  { id: 'raffles-manage',    label: 'Gestión de Rifas',    path: '/raffles/raffles',    icon: EmojiEventsRoundedIcon },
+  { id: 'raffles-tickets',   label: 'Gestión de Tiquetes', path: '/raffles/tickets',    icon: ConfirmationNumberRoundedIcon },
+  // Si luego quieres exponer "Ventas" en el menú, agrega aquí:
+  { id: 'raffles-sales',     label: 'Gestión de Ventas',   path: '/raffles/sales',      icon: MonetizationOnRoundedIcon },
+];
+
+export default function RafflesShell() {
+  return <ModuleShell title="ELIANA ERP - RAFFLES COLOMBIA" items={items} />;
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/RaffleManagementPage.jsx
+import * as React from 'react';
+import { Container, Paper, Button } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import { useNavigate } from 'react-router-dom';
+
+import PageHeader from '../../../core/components/ui/PageHeader';
+import { mockRaffles } from '../data/mock';
+import { pesoCol, entero } from '../utils/format';
+
+export default function RaffleManagementPage() {
+  const navigate = useNavigate();
+
+  const columns = [
+    { field: 'name', headerName: 'Nombre', flex: 1, minWidth: 220 },
+    { field: 'status', headerName: 'Estado', width: 140 },
+    {
+      field: 'price',
+      headerName: 'Precio',
+      width: 140,
+      type: 'number',
+      valueFormatter: ({ value }) => pesoCol(value),
+    },
+    {
+      field: 'ticketsSold',
+      headerName: 'Vendidos',
+      width: 120,
+      type: 'number',
+      valueFormatter: ({ value }) => entero(value),
+    },
+    {
+      field: 'totalTickets',
+      headerName: 'Total',
+      width: 120,
+      type: 'number',
+      valueFormatter: ({ value }) => entero(value),
+    },
+    { field: 'startDate', headerName: 'Inicio', width: 120 },
+    { field: 'endDate', headerName: 'Fin', width: 120 },
+  ];
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Gestión de Rifas"
+        subtitle="Crea y administra rifas"
+        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Rifas' }]}
+        actions={
+          <Button variant="contained" onClick={() => navigate('/raffles/raffles/new')}>
+            Nueva rifa
+          </Button>
+        }
+      />
+
+      <Paper sx={{ p: 1 }}>
+        <DataGrid
+          rows={mockRaffles}
+          columns={columns}
+          getRowId={(row) => row.id}
+          autoHeight
+          disableRowSelectionOnClick
+          pageSizeOptions={[10]}
+          sx={{ border: 'none' }}
+        />
+      </Paper>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/RafflesDashboardPage.jsx
+import * as React from 'react';
+import { Container, Grid, Paper, Stack, Button } from '@mui/material';
+import InsightsIcon from '@mui/icons-material/Insights';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import KpiCard from '../../../core/components/ui/KpiCard';
+import { mockRaffles, mockTickets } from '../data/mock';
+
+export default function RafflesDashboardPage() {
+  const totalRaffles = mockRaffles.length;
+  const activeRaffles = mockRaffles.filter(r => r.status === 'Activa').length;
+  const totalTickets = mockRaffles.reduce((a, r) => a + r.totalTickets, 0);
+  const soldTickets  = mockRaffles.reduce((a, r) => a + r.ticketsSold, 0);
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Dashboard (Rifas)"
+        subtitle="Resumen del módulo de rifas"
+        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Dashboard' }]}
+        actions={<Button variant="contained" startIcon={<InsightsIcon/>}>Nuevo reporte</Button>}
+      />
+
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={3}><KpiCard label="Rifas totales" value={totalRaffles} diff={0.6} /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Rifas activas" value={activeRaffles} diff={1.2} color="success" /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Tiquetes" value={totalTickets} diff={0.2} color="info" /></Grid>
+        <Grid item xs={12} md={3}><KpiCard label="Vendidos" value={soldTickets} diff={-0.3} color="secondary" /></Grid>
+
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2 }}>
+            {/* Aquí podría ir un gráfico; evitamos issues de tamaño con placeholders por ahora */}
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <div>Actividad reciente (placeholder, sin datos todavía)</div>
+              <div>Tiquetes registrados: {mockTickets.length}</div>
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Container>
+  );
+}
+</file>
+
+<file path="erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx">
+// PATH: erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx
+import * as React from 'react';
+import { Container, Paper } from '@mui/material';
+import { DataGrid, GridToolbarContainer, GridToolbarQuickFilter, GridActionsCellItem } from '@mui/x-data-grid';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import PageHeader from '../../../core/components/ui/PageHeader';
+import { useNavigate } from 'react-router-dom';
+import { mockTickets, mockRaffles } from '../data/mock';
+
+function Toolbar() {
+  return (
+    <GridToolbarContainer sx={{ px: 1, py: 0.5 }}>
+      <GridToolbarQuickFilter quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)} />
+    </GridToolbarContainer>
+  );
+}
+
+const raffleName = (id) => mockRaffles.find(r => r.id === id)?.name ?? '—';
+
+export default function TicketManagementPage() {
+  const navigate = useNavigate();
+  const columns = [
+    { field: 'number', headerName: 'N°', width: 100 },
+    { field: 'raffleId', headerName: 'Rifa', flex: 1, minWidth: 200, valueGetter: ({ value }) => raffleName(value) },
+    { field: 'buyer', headerName: 'Comprador', flex: 1, minWidth: 180 },
+    { field: 'phone', headerName: 'Teléfono', width: 140 },
+    { field: 'status', headerName: 'Estado', width: 140 },
+    { field: 'purchaseDate', headerName: 'Fecha', width: 120 },
+    {
+      field: 'actions', type: 'actions', headerName: 'Acciones', width: 120,
+      getActions: (params) => [
+        <GridActionsCellItem
+          key="view"
+          icon={<VisibilityRoundedIcon />}
+          label="Ver"
+          onClick={() => navigate(`/raffles/tickets/${params.id}`)}
+        />,
+      ],
+    },
+  ];
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 3 }}>
+      <PageHeader
+        title="Gestión de Tiquetes"
+        subtitle="Administra tiquetes del módulo de rifas"
+        breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Tiquetes' }]}
+      />
+      <Paper sx={{ p: 1 }}>
+        <DataGrid
+          rows={mockTickets}
+          columns={columns}
+          disableRowSelectionOnClick
+          autoHeight
+          pageSizeOptions={[10]}
+          slots={{ toolbar: Toolbar }}
+          sx={{ border: 'none' }}
+        />
+      </Paper>
     </Container>
   );
 }
@@ -4941,59 +5456,6 @@ export default function SubscriberListPage() {
 }
 </file>
 
-<file path="erp-frontend/src/routes/index.jsx">
-// PATH: erp-frontend/src/routes/index.jsx
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-
-import ProtectedRoute from './ProtectedRoute';
-import MainLayout from '../core/components/layout/MainLayout';
-
-import LoginPage from '../modules/auth/pages/LoginPage';
-import Dashboard from '../modules/dashboard/pages/Dashboard';
-import SubscriberListPage from '../modules/admin/pages/SubscriberListPage';
-import ModuleListPage from '../modules/admin/pages/ModuleListPage';
-
-// Raffles (nuevo “shell” como componente en components/)
-import RafflesShell from '../modules/raffles/components/RafflesShell';
-import RafflesDashboardPage from '../modules/raffles/pages/RafflesDashboardPage';
-import RaffleManagementPage from '../modules/raffles/pages/RaffleManagementPage';
-import RaffleDetailPage from '../modules/raffles/pages/RaffleDetailPage';
-import TicketManagementPage from '../modules/raffles/pages/TicketManagementPage';
-import TicketDetailPage from '../modules/raffles/pages/TicketDetailPage';
-import SalesManagementPage from '../modules/raffles/pages/SalesManagementPage';
-
-export default function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-
-      <Route element={<ProtectedRoute />}>
-        {/* ERP estándar */}
-        <Route element={<MainLayout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/subscribers" element={<SubscriberListPage />} />
-          <Route path="/modules" element={<ModuleListPage />} />
-        </Route>
-
-        {/* Módulo de Rifas: shell propio pero como componente del módulo */}
-        <Route path="/raffles" element={<RafflesShell />}>
-          <Route index element={<RafflesDashboardPage />} />
-          <Route path="raffles" element={<RaffleManagementPage />} />
-          <Route path="raffles/:raffleId" element={<RaffleDetailPage />} />
-          <Route path="tickets" element={<TicketManagementPage />} />
-          <Route path="tickets/:ticketId" element={<TicketDetailPage />} />
-          <Route path="sales" element={<SalesManagementPage />} />
-        </Route>
-      </Route>
-
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
-  );
-}
-</file>
-
 <file path="erp-frontend/src/core/components/layout/MainLayout.jsx">
 // PATH: erp-frontend/src/core/components/layout/MainLayout.jsx
 import * as React from 'react';
@@ -5013,6 +5475,61 @@ export default function MainLayout() {
 
   return (
     <ModuleShell title="ELIANA ERP - ADMIN" items={menuItems} />
+  );
+}
+</file>
+
+<file path="erp-frontend/src/routes/index.jsx">
+// PATH: erp-frontend/src/routes/index.jsx
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+
+import ProtectedRoute from './ProtectedRoute';
+import MainLayout from '../core/components/layout/MainLayout';
+
+import LoginPage from '../modules/auth/pages/LoginPage';
+import Dashboard from '../modules/dashboard/pages/Dashboard';
+import SubscriberListPage from '../modules/admin/pages/SubscriberListPage';
+import ModuleListPage from '../modules/admin/pages/ModuleListPage';
+
+// Raffles (módulo)
+import RafflesShell from '../modules/raffles/components/RafflesShell';
+import RafflesDashboardPage from '../modules/raffles/pages/RafflesDashboardPage';
+import RaffleManagementPage from '../modules/raffles/pages/RaffleManagementPage';
+import RaffleCreatePage from '../modules/raffles/pages/RaffleCreatePage';
+import RaffleDetailPage from '../modules/raffles/pages/RaffleDetailPage';
+import TicketManagementPage from '../modules/raffles/pages/TicketManagementPage';
+import TicketDetailPage from '../modules/raffles/pages/TicketDetailPage';
+import SalesManagementPage from '../modules/raffles/pages/SalesManagementPage';
+
+export default function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+
+      <Route element={<ProtectedRoute />}>
+        {/* ERP estándar */}
+        <Route element={<MainLayout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/subscribers" element={<SubscriberListPage />} />
+          <Route path="/modules" element={<ModuleListPage />} />
+        </Route>
+
+        {/* Módulo de Rifas */}
+        <Route path="/raffles" element={<RafflesShell />}>
+          <Route index element={<RafflesDashboardPage />} />
+          <Route path="raffles" element={<RaffleManagementPage />} />
+          <Route path="raffles/new" element={<RaffleCreatePage />} />
+          <Route path="raffles/:raffleId" element={<RaffleDetailPage />} />
+          <Route path="tickets" element={<TicketManagementPage />} />
+          <Route path="tickets/:ticketId" element={<TicketDetailPage />} />
+          <Route path="sales" element={<SalesManagementPage />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
   );
 }
 </file>
