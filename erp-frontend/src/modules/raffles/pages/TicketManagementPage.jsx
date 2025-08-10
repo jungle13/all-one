@@ -1,63 +1,39 @@
 // PATH: erp-frontend/src/modules/raffles/pages/TicketManagementPage.jsx
 import * as React from 'react';
-import { Container, Paper } from '@mui/material';
-import { DataGrid, GridToolbarContainer, GridToolbarQuickFilter, GridActionsCellItem } from '@mui/x-data-grid';
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
-import PageHeader from '../../../core/components/ui/PageHeader';
+import { Container, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { mockTickets, mockRaffles } from '../data/mock';
+import PageHeader from '@core/components/ui/PageHeader';
+import AppDataGrid from '@core/components/ui/AppDataGrid';
 
-function Toolbar() {
-  return (
-    <GridToolbarContainer sx={{ px: 1, py: 0.5 }}>
-      <GridToolbarQuickFilter quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)} />
-    </GridToolbarContainer>
-  );
-}
+const rows = [
+  { id: 'T-001', raffleName: 'Rifa Aniversario', buyerName: 'Juan Pérez', phone: '3001234567', numbers: ['0123'], paymentType: 'efectivo', status: 'paid',    createdAt: '2025-08-05' },
+  { id: 'T-002', raffleName: 'Rifa Día del Niño', buyerName: 'María López', phone: '3019876543', numbers: ['45','78'], paymentType: 'transferencia', status: 'pending', createdAt: '2025-08-07' },
+];
 
-const raffleName = (id) => mockRaffles.find(r => r.id === id)?.name ?? '—';
+const columns = [
+  { field: 'id', headerName: 'ID', width: 110 },
+  { field: 'raffleName', headerName: 'Rifa', flex: 1, minWidth: 180 },
+  { field: 'buyerName', headerName: 'Comprador', flex: 1, minWidth: 180 },
+  { field: 'phone', headerName: 'Celular', width: 140 },
+  { field: 'numbers', headerName: 'Números', flex: 1, minWidth: 160, valueFormatter: ({ value }) => Array.isArray(value) ? value.join(', ') : value ?? '—' },
+  { field: 'paymentType', headerName: 'Pago', width: 140 },
+  { field: 'status', headerName: 'Estado', width: 120 },
+  { field: 'createdAt', headerName: 'Creado', width: 130 },
+];
 
 export default function TicketManagementPage() {
   const navigate = useNavigate();
-  const columns = [
-    { field: 'number', headerName: 'N°', width: 100 },
-    { field: 'raffleId', headerName: 'Rifa', flex: 1, minWidth: 200, valueGetter: ({ value }) => raffleName(value) },
-    { field: 'buyer', headerName: 'Comprador', flex: 1, minWidth: 180 },
-    { field: 'phone', headerName: 'Teléfono', width: 140 },
-    { field: 'status', headerName: 'Estado', width: 140 },
-    { field: 'purchaseDate', headerName: 'Fecha', width: 120 },
-    {
-      field: 'actions', type: 'actions', headerName: 'Acciones', width: 120,
-      getActions: (params) => [
-        <GridActionsCellItem
-          key="view"
-          icon={<VisibilityRoundedIcon />}
-          label="Ver"
-          onClick={() => navigate(`/raffles/tickets/${params.id}`)}
-        />,
-      ],
-    },
-  ];
 
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
       <PageHeader
-        title="Gestión de Tiquetes"
-        subtitle="Administra tiquetes del módulo de rifas"
+        title="Gestión de tiquetes"
+        subtitle="Consulta y administra los tiquetes registrados"
         breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Tiquetes' }]}
+        actions={<Button variant="contained" onClick={() => navigate('/raffles/tickets/new')}>Nuevo tiquete</Button>}
       />
-      <Paper sx={{ p: 1 }}>
-        <DataGrid
-          rows={mockTickets}
-          columns={columns}
-          disableRowSelectionOnClick
-          autoHeight
-          pageSizeOptions={[10]}
-          slots={{ toolbar: Toolbar }}
-          sx={{ border: 'none' }}
-        />
-      </Paper>
+
+      <AppDataGrid rows={rows} columns={columns} />
     </Container>
   );
 }
-

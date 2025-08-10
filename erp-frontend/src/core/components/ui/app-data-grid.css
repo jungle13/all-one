@@ -1,0 +1,14 @@
+/* PATH: erp-frontend/src/core/components/ui/app-data-grid.css */
+.app-data-grid__paper {
+  /* p: 1 (8px) equivalente a sx={{ p: 1 }} */
+  padding: 8px;
+}
+
+.app-data-grid {
+  border: none; /* equivalente a sx={{ border: 'none' }} */
+}
+
+/* Encabezado más legible */
+.app-data-grid .MuiDataGrid-columnHeaderTitle {
+  font-weight: 700;
+}

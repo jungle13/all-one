@@ -1,42 +1,19 @@
 // PATH: erp-frontend/src/modules/admin/components/ModuleTable.jsx
 import * as React from 'react';
-import { Box, Chip, Stack, Tooltip, Switch, Button, IconButton } from '@mui/material';
-import {
-  DataGrid,
-  GridActionsCellItem,
-  GridToolbarContainer,
-  GridToolbarQuickFilter,
-} from '@mui/x-data-grid';
+import { Chip, Stack, Tooltip, Switch, Button, IconButton } from '@mui/material';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
 import { useNavigate } from 'react-router-dom';
-
-/** Toolbar dentro del contexto del DataGrid */
-function ModulesToolbar({ onAdd }) {
-  return (
-    <GridToolbarContainer sx={{ px: 1, py: 0.5, display: 'flex', gap: 1, justifyContent: 'space-between' }}>
-      <GridToolbarQuickFilter quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)} />
-      <Tooltip title="Nuevo módulo">
-        <span>
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => onAdd?.()}>
-            Nuevo módulo
-          </Button>
-        </span>
-      </Tooltip>
-    </GridToolbarContainer>
-  );
-}
+import AppDataGrid from '@core/components/ui/AppDataGrid';
 
 /**
  * Tabla reutilizable para Módulos.
  * - Tolera rows undefined (usa [] por defecto).
- * - Callbacks: Add/Edit/Delete/Toggle.
+ * - Callbacks: Edit/Delete/Toggle.
  */
 export default function ModuleTable({
   rows = [],
-  onAdd,
   onEdit,
   onDelete,
   onToggleEnabled,
@@ -113,22 +90,15 @@ export default function ModuleTable({
   );
 
   return (
-    <Box sx={{ height: 560, width: '100%' }}>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        getRowId={(r) => r.id}
-        disableRowSelectionOnClick
-        pageSizeOptions={[5, 10, 25]}
-        initialState={{
-          pagination: { paginationModel: { pageSize: 10 } },
-        }}
-        slots={{ toolbar: ModulesToolbar }}
-        slotProps={{ toolbar: { onAdd } }}
-        sx={{ border: 'none', height: '100%' }}
-      />
-    </Box>
+    <AppDataGrid 
+      rows={rows}
+      columns={columns}
+      pageSize={10}
+      pageSizeOptions={[5, 10, 25]}
+      dataGridProps={{
+        getRowId: (r) => r.id,
+        sx: { height: 560 }
+      }}
+    />
   );
 }
-
-

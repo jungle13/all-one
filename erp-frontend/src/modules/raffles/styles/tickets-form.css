@@ -1,0 +1,22 @@
+/* PATH: erp-frontend/src/modules/raffles/styles/tickets-form.css */
+.rf-tickets__form {
+  display: grid;
+  gap: 16px;
+}
+
+.rf-section {
+  padding: 16px;
+}
+
+.rf-section__title {
+  margin: 0 0 4px 0;
+}
+
+.rf-section__divider {
+  margin: 8px 0 16px 0; /* separa TÍTULO / CONTENIDO */
+  opacity: 0.8;
+}
+
+.rf-tickets__number-editor .MuiChip-root {
+  margin-bottom: 6px;
+}

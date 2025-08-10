@@ -1,31 +1,14 @@
 // PATH: erp-frontend/src/modules/admin/components/SubscriberTable.jsx
 import * as React from 'react';
-import { Box, Button } from '@mui/material';
 import {
-  DataGrid,
   GridActionsCellItem,
-  GridToolbarContainer,
-  GridToolbarQuickFilter,
 } from '@mui/x-data-grid';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import AppDataGrid from '@core/components/ui/AppDataGrid';
 
-/** Toolbar dentro del contexto del DataGrid */
-function SubscribersToolbar({ onAdd }) {
-  return (
-    <GridToolbarContainer sx={{ px: 1, py: 0.5, display: 'flex', gap: 1, justifyContent: 'space-between' }}>
-      <GridToolbarQuickFilter
-        quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)}
-      />
-      <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => onAdd?.()}>
-        Nuevo suscriptor
-      </Button>
-    </GridToolbarContainer>
-  );
-}
 
-export default function SubscriberTable({ rows, data, onAdd, onEdit, onDelete }) {
+export default function SubscriberTable({ rows, data, onEdit, onDelete }) {
   const safeRows = React.useMemo(() => {
     if (Array.isArray(rows)) return rows;
     if (Array.isArray(data)) return data;
@@ -60,21 +43,16 @@ export default function SubscriberTable({ rows, data, onAdd, onEdit, onDelete })
   ], [onEdit, onDelete]);
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <DataGrid
-        rows={safeRows}
-        getRowId={(r) => r.id ?? r._id ?? `${r.email}-${r.name}`}
-        columns={columns}
-        disableRowSelectionOnClick
-        density="comfortable"
-        pageSizeOptions={[5, 10]}
-        initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
-        slots={{ toolbar: SubscribersToolbar }}
-        slotProps={{ toolbar: { onAdd } }}
-        sx={{ border: 'none', height: 520 }}
-      />
-    </Box>
+    <AppDataGrid
+      rows={safeRows}
+      columns={columns}
+      pageSize={5}
+      pageSizeOptions={[5, 10]}
+      dataGridProps={{
+        getRowId: (r) => r.id ?? r._id ?? `${r.email}-${r.name}`,
+        density: 'comfortable',
+        sx: { height: 520 },
+      }}
+    />
   );
 }
-
-

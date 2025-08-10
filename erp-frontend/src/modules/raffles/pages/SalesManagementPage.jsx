@@ -1,18 +1,10 @@
 // PATH: erp-frontend/src/modules/raffles/pages/SalesManagementPage.jsx
 import * as React from 'react';
-import { Container, Paper } from '@mui/material';
-import { DataGrid, GridToolbarContainer, GridToolbarQuickFilter } from '@mui/x-data-grid';
+import { Container } from '@mui/material';
 import PageHeader from '../../../core/components/ui/PageHeader';
 import { mockSales, mockRaffles } from '../data/mock';
 import { pesoCol } from '../utils/format';
-
-function Toolbar() {
-  return (
-    <GridToolbarContainer sx={{ px: 1, py: 0.5 }}>
-      <GridToolbarQuickFilter quickFilterParser={(v) => v.split(/\s+/).filter(Boolean)} />
-    </GridToolbarContainer>
-  );
-}
+import AppDataGrid from '@core/components/ui/AppDataGrid';
 
 const raffleName = (id) => mockRaffles.find(r => r.id === id)?.name ?? '—';
 
@@ -32,18 +24,11 @@ export default function SalesManagementPage() {
         subtitle="Registros de ventas (mock)"
         breadcrumbs={[{ label: 'Rifas', href: '/raffles' }, { label: 'Gestión de Ventas' }]}
       />
-      <Paper sx={{ p: 1 }}>
-        <DataGrid
-          rows={mockSales}
-          columns={columns}
-          getRowId={(row) => row.id}
-          autoHeight
-          disableRowSelectionOnClick
-          pageSizeOptions={[10]}
-          slots={{ toolbar: Toolbar }}
-          sx={{ border: 'none' }}
-        />
-      </Paper>
+      <AppDataGrid
+        rows={mockSales}
+        columns={columns}
+        dataGridProps={{ getRowId: (row) => row.id }}
+      />
     </Container>
   );
 }

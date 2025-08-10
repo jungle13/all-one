@@ -1,14 +1,12 @@
 // PATH: erp-frontend/src/modules/admin/pages/ModuleListPage.jsx
 import * as React from 'react';
 import {
-  Box,
   Button,
   Container,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Paper,
   Stack,
   TextField,
 } from '@mui/material';
@@ -93,18 +91,15 @@ export default function ModuleListPage() {
         title="Módulos"
         subtitle="Activa/inhabilita módulos del ERP y administra su catálogo"
         breadcrumbs={[{ label: 'Inicio', href: '/' }, { label: 'Módulos' }]}
-        
+        actions={<Button variant="contained" onClick={openCreate}>Nuevo módulo</Button>}
       />
 
-      <Paper sx={{ p: 2 }}>
-        <ModuleTable
-          rows={rows}
-          onAdd={openCreate}
-          onEdit={openEdit}
-          onDelete={handleDelete}
-          onToggleEnabled={handleToggleEnabled}
-        />
-      </Paper>
+      <ModuleTable
+        rows={rows}
+        onEdit={openEdit}
+        onDelete={handleDelete}
+        onToggleEnabled={handleToggleEnabled}
+      />
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="sm">
         <DialogTitle>{editing ? 'Editar módulo' : 'Nuevo módulo'}</DialogTitle>
